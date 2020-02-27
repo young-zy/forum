@@ -9,6 +9,9 @@ import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer
+import org.springframework.data.redis.serializer.StringRedisSerializer
+
 
 @Configuration
 class RateLimitRedisConfig(
@@ -27,6 +30,10 @@ class RateLimitRedisConfig(
         val template = RedisTemplate<String, RateLimit>()
         template.setConnectionFactory(rateLimitRedisConnectionFactory())
         template.setEnableTransactionSupport(true)
+        val stringRedisSerializer = StringRedisSerializer()
+        template.keySerializer = stringRedisSerializer
+        val jackson2JsonRedisSerializer = Jackson2JsonRedisSerializer(RateLimit::class.java)
+        template.valueSerializer = jackson2JsonRedisSerializer
         return template
     }
 }

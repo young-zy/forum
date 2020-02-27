@@ -10,7 +10,9 @@ data class ReplyEntity(
         @Column(name = "rid", nullable = false, precision = 0)
         @Id
         var rid: Int = 0,
-        @Column(name = "replyContent", nullable = true, length = -1)
+        @Column(name = "tid", nullable = false)
+        var tid: Int = 0,
+        @Column(name = "replyContent", nullable = true)
         @Basic
         var replyContent: String? = null,
         @Column(name = "replyTime", nullable = false)
@@ -21,11 +23,11 @@ data class ReplyEntity(
         var lastEditTime: Timestamp? = null,
         @Column(name = "priority", nullable = true)
         @Basic
-        var priority: Any? = null,
+        var priority: Int? = null,
         @Column(name = "is_bestAnswer", nullable = false)
         @Basic
-        var isBestAnswer: Byte = 0,
-        @JoinColumn(name = "tid", referencedColumnName = "tid", nullable = false)
+        var isBestAnswer: Boolean = false,
+        @JoinColumn(name = "tid", referencedColumnName = "tid", nullable = false, insertable = false, updatable = false)
         @ManyToOne
         var threadByTid: ThreadEntity? = null,
         @JoinColumn(name = "uid", referencedColumnName = "uid", nullable = false)

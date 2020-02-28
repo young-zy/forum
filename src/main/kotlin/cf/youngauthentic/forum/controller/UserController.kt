@@ -48,8 +48,10 @@ class UserController {
             responseStatus = HttpStatus.UNAUTHORIZED
         } catch (e: RateLimitExceededException) {
             responseStatus = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, "API request rate exceeded the limit")
         } catch (e: Exception) {
             responseStatus = HttpStatus.INTERNAL_SERVER_ERROR
+            responseBody = Response(false, e.message ?: "")
         } finally {
             logger.debug("test")
             return ResponseEntity

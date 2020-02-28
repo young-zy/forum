@@ -8,5 +8,5 @@ data class Token(
         @Id var token: String,
         val uid: Int,
         var username: String,
-        var auth: String
+        var auth: Int
 )

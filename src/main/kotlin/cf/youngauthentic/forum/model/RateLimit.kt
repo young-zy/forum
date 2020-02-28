@@ -6,7 +6,7 @@ import java.sql.Timestamp
 
 @RedisHash("rateLimit")
 data class RateLimit(
-        @Id var userIp: String,
-        var timesRemain: Int,
-        var resetTimestamp: Timestamp
+        @Id var userIp: String = "",
+        var timesRemain: Int = -1,
+        var resetTimestamp: Timestamp = Timestamp(0)
 )

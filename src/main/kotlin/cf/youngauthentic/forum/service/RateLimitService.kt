@@ -3,6 +3,7 @@ package cf.youngauthentic.forum.service
 import cf.youngauthentic.forum.model.RateLimit
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
@@ -11,6 +12,20 @@ import java.sql.Timestamp
 class RateLimitService {
     @Autowired
     private lateinit var rateLimitRedisTemplate: RedisTemplate<String, RateLimit>
+
+
+    /**
+     * build rate limit response headers
+     * @author young-zy
+     */
+    fun buildHeader(requestHeaders: Map<String, String>, responseHeaders: HttpHeaders): RateLimit {
+        val rateLimit = hasReserve(requestHeaders["x-real-ip"]
+                ?: throw Exception("X-Real-IP in header not found.If you are maintainer, please check balance loader settings"))
+        responseHeaders.add("X-RateLimit-Limit", "500")
+        responseHeaders.add("X-RateLimit-Remaining", rateLimit.timesRemain.toString())
+        responseHeaders.add("X-RateLimit-Reset", rateLimit.resetTimestamp.toString())
+        return rateLimit
+    }
 
     /**
      * check if user still has access rate

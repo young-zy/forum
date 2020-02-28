@@ -39,12 +39,8 @@ class UserController {
         var responseStatus = HttpStatus.OK
         var responseBody: Response? = null
         try {
-            val rateLimit = rateLimitService.hasReserve(headers["X-Real-IP"]
-                    ?: throw Exception("X-Real-IP in header not found, please check balance loader settings"))
-            responseHeaders.add("X-RateLimit-Limit", "500")
-            responseHeaders.add("X-RateLimit-Remaining", rateLimit.timesRemain.toString())
-            responseHeaders.add("X-RateLimit-Reset", rateLimit.resetTimestamp.toString())
-            if (rateLimit.timesRemain == -1) {
+            val rateLimit = rateLimitService.buildHeader(headers, responseHeaders)
+            if (rateLimit.timesRemain <= -1) {
                 throw RateLimitExceededException()
             }
             responseBody = UserResponse(userService.getDetailedUser(userId.toInt()))
@@ -64,22 +60,27 @@ class UserController {
     }
 
     @PostMapping("/user/login")
-    fun login(): ResponseEntity<*> {
-        val headers = HttpHeaders()
-        return try {
-
-
-            ResponseEntity.status(HttpStatus.OK).headers(headers).body(Response())
+    fun login(
+            @RequestHeader headers: Map<String, String>
+    ): ResponseEntity<*> {
+        val responseHeaders = HttpHeaders()
+        val responseBody: Response? = null
+        try {
+            val rateLimit = rateLimitService.buildHeader(headers, responseHeaders)
+            if (rateLimit.timesRemain <= -1) {
+                throw RateLimitExceededException()
+            }
         } catch (e: PasswordIncorrectException) {
-            ResponseEntity
-                    .status(HttpStatus.METHOD_NOT_ALLOWED)
-                    .headers(headers)
-                    .body(Response())
+
         } catch (e: UsernameIncorrectException) {
-            ResponseEntity
+
+        } catch (e: Exception) {
+
+        } finally {
+            return ResponseEntity
                     .status(HttpStatus.METHOD_NOT_ALLOWED)
-                    .headers(headers)
-                    .body(Response())
+                    .headers(responseHeaders)
+                    .body(responseBody)
         }
     }
 

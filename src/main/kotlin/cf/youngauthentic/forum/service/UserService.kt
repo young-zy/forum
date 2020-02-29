@@ -3,6 +3,7 @@ package cf.youngauthentic.forum.service
 import cf.youngauthentic.forum.model.user.DetailedUser
 import cf.youngauthentic.forum.model.user.UserEntity
 import cf.youngauthentic.forum.repo.UserRepository
+import cf.youngauthentic.forum.service.exception.NotFoundException
 import cf.youngauthentic.forum.service.exception.PasswordInvalidException
 import cf.youngauthentic.forum.service.exception.UsernameExistsException
 import org.springframework.beans.factory.annotation.Autowired
@@ -41,7 +42,7 @@ class UserService {
     }
 
     fun getDetailedUser(uid: Int): DetailedUser {
-        return userRepository.findDetailedUserEntityByUid(uid)
+        return userRepository.findDetailedUserEntityByUid(uid) ?: throw NotFoundException()
     }
 
     @Transactional

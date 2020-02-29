@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 interface UserRepository : JpaRepository<UserEntity, Int> {
     fun findByUid(uid: Int): UserEntity
 
-    fun findDetailedUserEntityByUid(uid: Int): DetailedUser
+    fun findDetailedUserEntityByUid(uid: Int): DetailedUser?
 
     fun findByUsername(username: String): UserEntity?
 

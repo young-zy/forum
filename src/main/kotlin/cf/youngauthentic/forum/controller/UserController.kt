@@ -46,7 +46,11 @@ class UserController {
         } catch (e: RateLimitExceededException) {
             responseStatus = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, "API request rate exceeded the limit")
+        } catch (e: NotFoundException) {
+            responseStatus = HttpStatus.NOT_FOUND
+            responseBody = Response(false, e.message)
         } catch (e: Exception) {
+            logger.warn(e.printStackTrace().toString())
             responseStatus = HttpStatus.INTERNAL_SERVER_ERROR
             responseBody = Response(false, e.message ?: "")
         } finally {

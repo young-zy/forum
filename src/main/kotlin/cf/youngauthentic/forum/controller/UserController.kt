@@ -116,4 +116,29 @@ class UserController {
                     .body(responseBody)
         }
     }
+
+    @PostMapping
+    fun logout(
+            @RequestHeader headers: Map<String, String>
+    ): ResponseEntity<*> {
+        var status = HttpStatus.OK
+        val responseHeaders = HttpHeaders()
+        var responseBody: Response? = null
+        try {
+            rateLimitService.buildHeader(headers, responseHeaders)
+            loginService.logout(headers["token"] ?: error("token not found in header"))
+        } catch (e: RateLimitExceededException) {
+            status = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message ?: "")
+        } catch (e: Exception) {
+            logger.warn(e.stackTrace.toString())
+            status = HttpStatus.INTERNAL_SERVER_ERROR
+            responseBody = Response(false, e.message ?: "")
+        } finally {
+            return ResponseEntity
+                    .status(status)
+                    .headers(responseHeaders)
+                    .body(responseBody)
+        }
+    }
 }

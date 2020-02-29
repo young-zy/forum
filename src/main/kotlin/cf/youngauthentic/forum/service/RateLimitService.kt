@@ -1,6 +1,7 @@
 package cf.youngauthentic.forum.service
 
 import cf.youngauthentic.forum.model.RateLimit
+import cf.youngauthentic.forum.service.exception.RateLimitExceededException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.http.HttpHeaders
@@ -18,13 +19,15 @@ class RateLimitService {
      * build rate limit response headers
      * @author young-zy
      */
-    fun buildHeader(requestHeaders: Map<String, String>, responseHeaders: HttpHeaders): RateLimit {
+    fun buildHeader(requestHeaders: Map<String, String>, responseHeaders: HttpHeaders) {
         val rateLimit = hasReserve(requestHeaders["x-real-ip"]
                 ?: throw Exception("X-Real-IP in header not found.If you are maintainer, please check balance loader settings"))
         responseHeaders.add("X-RateLimit-Limit", "500")
         responseHeaders.add("X-RateLimit-Remaining", rateLimit.timesRemain.toString())
         responseHeaders.add("X-RateLimit-Reset", rateLimit.resetTimestamp.toString())
-        return rateLimit
+        if (rateLimit.timesRemain <= -1) {
+            throw RateLimitExceededException()
+        }
     }
 
     /**

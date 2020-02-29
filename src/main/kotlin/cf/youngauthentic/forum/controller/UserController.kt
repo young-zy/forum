@@ -39,10 +39,7 @@ class UserController {
         var responseStatus = HttpStatus.OK
         var responseBody: Response? = null
         try {
-            val rateLimit = rateLimitService.buildHeader(headers, responseHeaders)
-            if (rateLimit.timesRemain <= -1) {
-                throw RateLimitExceededException()
-            }
+            rateLimitService.buildHeader(headers, responseHeaders)
             responseBody = UserResponse(userService.getDetailedUser(userId.toInt()))
         } catch (e: AuthException) {
             responseStatus = HttpStatus.UNAUTHORIZED
@@ -53,7 +50,6 @@ class UserController {
             responseStatus = HttpStatus.INTERNAL_SERVER_ERROR
             responseBody = Response(false, e.message ?: "")
         } finally {
-            logger.debug("test")
             return ResponseEntity
                     .status(responseStatus)
                     .headers(responseHeaders)
@@ -70,10 +66,7 @@ class UserController {
         val responseHeaders = HttpHeaders()
         var responseBody: Response? = null
         try {
-            val rateLimit = rateLimitService.buildHeader(headers, responseHeaders)
-            if (rateLimit.timesRemain <= -1) {
-                throw RateLimitExceededException()
-            }
+            rateLimitService.buildHeader(headers, responseHeaders)
             val token = loginService.login(requestBody.username, requestBody.password)
             responseBody = LoginResponse(token)
         } catch (e: PasswordIncorrectException) {
@@ -82,6 +75,9 @@ class UserController {
         } catch (e: UsernameIncorrectException) {
             status = HttpStatus.METHOD_NOT_ALLOWED
             responseBody = Response(false, "Username Incorrect")
+        } catch (e: RateLimitExceededException) {
+            status = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message ?: "")
         } catch (e: Exception) {
             status = HttpStatus.INTERNAL_SERVER_ERROR
             responseBody = Response(false, e.message ?: "")
@@ -101,10 +97,7 @@ class UserController {
         val responseHeaders = HttpHeaders()
         var responseBody: Response? = null
         try {
-            val rateLimit = rateLimitService.buildHeader(headers, responseHeaders)
-            if (rateLimit.timesRemain <= -1) {
-                throw RateLimitExceededException()
-            }
+            rateLimitService.buildHeader(headers, responseHeaders)
             userService.register(request.username, request.password, request.email)
         } catch (e: UsernameExistsException) {
             status = HttpStatus.METHOD_NOT_ALLOWED

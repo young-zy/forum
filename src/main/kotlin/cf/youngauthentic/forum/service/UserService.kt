@@ -5,7 +5,6 @@ import cf.youngauthentic.forum.model.user.UserEntity
 import cf.youngauthentic.forum.repo.UserRepository
 import cf.youngauthentic.forum.service.exception.NotFoundException
 import cf.youngauthentic.forum.service.exception.PasswordIncorrectException
-import cf.youngauthentic.forum.service.exception.PasswordInvalidException
 import cf.youngauthentic.forum.service.exception.UsernameExistsException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -48,15 +47,22 @@ class UserService {
         return userRepository.findDetailedUserEntityByUid(uid) ?: throw NotFoundException()
     }
 
+    /**
+     * @author young-zy
+     * @param username username of user
+     * @param password password of user
+     * @param email email of user
+     * @throws IllegalArgumentException when any of the parameter doesn't match regex requirement
+     * @throws UsernameExistsException when the username already exists
+     */
     @Transactional
     fun register(username: String, password: String, email: String) {
         if (existsUsername(username)) {
             throw UsernameExistsException()
         } else {
-            val regex = Regex("")
-            if (!regex.matches(password)) {
-                throw PasswordInvalidException()
-            }
+            regexService.validateUsername(username)
+            regexService.validatePassword(password)
+            regexService.validateEmail(email)
             val user = UserEntity()
             user.username = username
             user.hashedPassword = PasswordHash.createHash(password)

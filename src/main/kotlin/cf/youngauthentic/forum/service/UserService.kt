@@ -19,6 +19,8 @@ class UserService {
     private lateinit var userRepository: UserRepository
     @Autowired
     private lateinit var loginService: LoginService
+    @Autowired
+    private lateinit var regexService: RegexService
 
     /**
      * get UserEntity through provided username
@@ -83,7 +85,15 @@ class UserService {
         if (!PasswordHash.validatePassword(originalPassword, userEntity.hashedPassword)) {
             throw PasswordIncorrectException()
         }
-        //TODO: implement email and password regex check
+        if (newUsername != null) {
+            regexService.validateUsername(newUsername)
+        }
+        if (newPassword != null) {
+            regexService.validatePassword(newPassword)
+        }
+        if (newEmail != null) {
+            regexService.validateEmail(newEmail)
+        }
         userEntity.email = newEmail ?: userEntity.email
         if (existsUsername(newUsername ?: "")) {
             throw UsernameExistsException()

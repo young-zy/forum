@@ -2,6 +2,7 @@ package cf.youngauthentic.forum.controller
 
 import cf.youngauthentic.forum.controller.request.LoginRequest
 import cf.youngauthentic.forum.controller.request.RegisterRequest
+import cf.youngauthentic.forum.controller.request.UserUpdateRequest
 import cf.youngauthentic.forum.controller.response.LoginResponse
 import cf.youngauthentic.forum.controller.response.Response
 import cf.youngauthentic.forum.controller.response.UserResponse
@@ -50,8 +51,45 @@ class UserController {
             responseStatus = HttpStatus.NOT_FOUND
             responseBody = Response(false, e.message)
         } catch (e: Exception) {
-            logger.warn(e.printStackTrace().toString())
+            logger.warn(e.stackTrace.toString())
             responseStatus = HttpStatus.INTERNAL_SERVER_ERROR
+            responseBody = Response(false, e.message ?: "")
+        } finally {
+            return ResponseEntity
+                    .status(responseStatus)
+                    .headers(responseHeaders)
+                    .body(responseBody)
+        }
+    }
+
+    @PutMapping("/user")
+    fun userUpdate(
+            @RequestHeader headers: Map<String, String>,
+            @RequestBody body: UserUpdateRequest
+    ): ResponseEntity<*> {
+        val responseHeaders = HttpHeaders()
+        var responseStatus = HttpStatus.OK
+        var responseBody: Response? = null
+        try {
+            rateLimitService.buildHeader(headers, responseHeaders)
+            userService.userInfoUpdate(
+                    headers["token"] ?: error("token not found in header"),
+                    body.password,
+                    body.newPassword,
+                    body.username,
+                    body.email)
+
+        } catch (e: RateLimitExceededException) {
+            responseStatus = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message ?: "")
+        } catch (e: PasswordIncorrectException) {
+            responseStatus = HttpStatus.UNAUTHORIZED
+            responseBody = Response(false, e.message ?: "")
+        } catch (e: IllegalArgumentException) {
+            responseStatus = HttpStatus.BAD_REQUEST
+            responseBody = Response(false, e.message ?: "")
+        } catch (e: Exception) {
+            logger.warn(e.stackTrace.toString())
             responseBody = Response(false, e.message ?: "")
         } finally {
             return ResponseEntity
@@ -74,10 +112,10 @@ class UserController {
             val token = loginService.login(requestBody.username, requestBody.password)
             responseBody = LoginResponse(token)
         } catch (e: PasswordIncorrectException) {
-            status = HttpStatus.METHOD_NOT_ALLOWED
+            status = HttpStatus.UNAUTHORIZED
             responseBody = Response(false, "Password Incorrect")
         } catch (e: UsernameIncorrectException) {
-            status = HttpStatus.METHOD_NOT_ALLOWED
+            status = HttpStatus.UNAUTHORIZED
             responseBody = Response(false, "Username Incorrect")
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
@@ -104,8 +142,11 @@ class UserController {
             rateLimitService.buildHeader(headers, responseHeaders)
             userService.register(request.username, request.password, request.email)
         } catch (e: UsernameExistsException) {
-            status = HttpStatus.METHOD_NOT_ALLOWED
+            status = HttpStatus.UNAUTHORIZED
             responseBody = Response(false, "Username already exists")
+        } catch (e: RateLimitExceededException) {
+            status = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message ?: "")
         } catch (e: Exception) {
             status = HttpStatus.INTERNAL_SERVER_ERROR
             responseBody = Response(false, e.message ?: "")

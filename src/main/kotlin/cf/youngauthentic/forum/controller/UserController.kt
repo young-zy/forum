@@ -158,7 +158,7 @@ class UserController {
         }
     }
 
-    @PostMapping
+    @PostMapping("/user/logout")
     fun logout(
             @RequestHeader headers: Map<String, String>
     ): ResponseEntity<*> {

@@ -131,7 +131,7 @@ class UserController {
         }
     }
 
-    @PostMapping("/user/register")
+    @PostMapping("/user")
     fun register(
             @RequestHeader headers: Map<String, String>,
             @RequestBody request: RegisterRequest): ResponseEntity<*> {

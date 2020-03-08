@@ -1,14 +1,16 @@
-package cf.youngauthentic.forum.model
+package cf.youngauthentic.forum.model.reply
 
+import cf.youngauthentic.forum.model.thread.ThreadEntity
 import cf.youngauthentic.forum.model.user.UserEntity
 import java.sql.Timestamp
 import javax.persistence.*
 
 @Entity
-@Table(name = "Reply", schema = "Forum")
+@Table(name = "reply", schema = "Forum")
 data class ReplyEntity(
         @Column(name = "rid", nullable = false, precision = 0)
         @Id
+        @GeneratedValue(strategy = GenerationType.AUTO)
         var rid: Int = 0,
         @Column(name = "tid", nullable = false)
         var tid: Int = 0,
@@ -17,10 +19,10 @@ data class ReplyEntity(
         var replyContent: String? = null,
         @Column(name = "replyTime", nullable = false)
         @Basic
-        var replyTime: Timestamp? = null,
+        var replyTime: Timestamp = Timestamp(System.currentTimeMillis()),
         @Column(name = "lastEditTime", nullable = false)
         @Basic
-        var lastEditTime: Timestamp? = null,
+        var lastEditTime: Timestamp = Timestamp(System.currentTimeMillis()),
         @Column(name = "priority", nullable = true)
         @Basic
         var priority: Int? = null,

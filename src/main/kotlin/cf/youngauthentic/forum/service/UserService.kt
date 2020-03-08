@@ -56,6 +56,7 @@ class UserService {
      * @throws UsernameExistsException when the username already exists
      */
     @Transactional
+    @Throws(UsernameExistsException::class)
     fun register(username: String, password: String, email: String) {
         if (existsUsername(username)) {
             throw UsernameExistsException()
@@ -85,6 +86,7 @@ class UserService {
      * @throws IllegalArgumentException when password or email doesn't fit regex
      */
     @Transactional
+    @Throws(PasswordIncorrectException::class)
     fun userInfoUpdate(token: String, originalPassword: String, newPassword: String?, newUsername: String?, newEmail: String?) {
         val uid = loginService.getUid(token)
         val userEntity = getUser(uid)

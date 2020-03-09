@@ -5,6 +5,8 @@ spring.datasource.username=         # your username here
 spring.datasource.password=         # your password here
 spring.jpa.show-sql=true            # should be turned off during production
 spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+# let query column name be the name of annotations
+spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
 
 # token redis config
 token.redis.host=127.0.0.1

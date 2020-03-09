@@ -8,6 +8,6 @@ interface DetailedUser {
     val uid: Int
     val username: String
     val email: String
-    val auth: String
+    val auth: UserAuth
     val regDate: Date
 }

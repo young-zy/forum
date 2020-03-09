@@ -1,6 +1,7 @@
 package cf.youngauthentic.forum.service
 
 import cf.youngauthentic.forum.model.user.DetailedUser
+import cf.youngauthentic.forum.model.user.UserAuth
 import cf.youngauthentic.forum.model.user.UserEntity
 import cf.youngauthentic.forum.repo.UserRepository
 import cf.youngauthentic.forum.service.exception.NotFoundException
@@ -69,10 +70,11 @@ class UserService {
             regexService.validateUsername(username)
             regexService.validatePassword(password)
             regexService.validateEmail(email)
+            val userAuth = UserAuth(isUser = true)
             val user = UserEntity()
             user.username = username
             user.hashedPassword = PasswordHash.createHash(password)
-            user.auth = "user"
+            user.auth = userAuth
             user.regDate = Date(System.currentTimeMillis())
             user.email = email
             userRepository.save(user)

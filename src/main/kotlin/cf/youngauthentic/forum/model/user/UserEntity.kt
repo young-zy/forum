@@ -1,5 +1,6 @@
 package cf.youngauthentic.forum.model.user
 
+import com.google.gson.Gson
 import java.sql.Date
 import javax.persistence.*
 
@@ -23,9 +24,24 @@ data class UserEntity(
         @Basic
         var regDate: Date = Date(0),
         @Column(name = "auth", nullable = false)
-        @Basic
-        var auth: String = "unLoggedIn",
+        @Convert(converter = UserAuthConverter::class)
+        var auth: UserAuth = UserAuth(),
         @Column(name = "tag_priority", nullable = false)
         @Basic
         var tagPriority: String = "0"
 )
+
+@Converter
+class UserAuthConverter : AttributeConverter<UserAuth, String> {
+
+        private val gson = Gson()
+
+        override fun convertToDatabaseColumn(attribute: UserAuth?): String {
+                return gson.toJson(attribute)
+        }
+
+        override fun convertToEntityAttribute(dbData: String?): UserAuth {
+                return gson.fromJson(dbData, UserAuth::class.java)
+        }
+
+}

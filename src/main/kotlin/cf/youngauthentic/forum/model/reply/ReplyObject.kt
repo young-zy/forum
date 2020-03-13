@@ -6,7 +6,7 @@ class ReplyObject(replyProjection: ReplyProjection) {
     var replyTime = replyProjection.replyTime
     var lastEditTime = replyProjection.lastEditTime
     var priority = replyProjection.priority
-    var isBestAnswer = replyProjection.isBestAnswer
-    var userByUserId = replyProjection.userByUserId
+    var isBestAnswer = replyProjection.bestAnswer
+    var userByUserId = replyProjection.userByUid
     var vote = 0
 }

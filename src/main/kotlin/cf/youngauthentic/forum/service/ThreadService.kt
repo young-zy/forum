@@ -34,7 +34,7 @@ class ThreadService {
         val threadProjection = threadRepo.findByTid(threadId)
         val thread = ThreadObject(threadProjection)
         val repliesProjection = replyRepo.findAllByTid(threadId,
-                PageRequest.of(page, size,
+                PageRequest.of(page - 1, size,
                         Sort.by("priority").descending()))
         val replies = mutableListOf<ReplyObject>()
         var replyObject: ReplyObject
@@ -55,20 +55,21 @@ class ThreadService {
     fun postThread(token: String?, sectionId: Int, title: String, content: String, isQuestion: Boolean) {
         val tokenObj = loginService.getToken(token)
         //TODO hasAuth
-        val thread = ThreadEntity(sid = sectionId, title = title, uid = tokenObj!!.uid, question = isQuestion)
+        val thread = ThreadEntity(sid = sectionId, title = title, uid = tokenObj!!.uid, question = isQuestion, lastReplyUid = tokenObj.uid)
         threadRepo.saveAndFlush(thread)
-        val replyEntity = ReplyEntity(tid = thread.tid, replyContent = content, priority = 99999.99999)
+        val replyEntity = ReplyEntity(tid = thread.tid, replyContent = content, priority = 9999.9999, uid = thread.uid)
         replyRepo.save(replyEntity)
     }
 
     @Transactional
     @Throws(AuthException::class, NotFoundException::class)
     fun postReply(token: String, threadId: Int, replyContent: String) {
+        val tokenObj = loginService.getToken(token)
         if (!threadRepo.existsById(threadId)) {
             throw NotFoundException()
         }
         // TODO hasAuth
-        val replyEntity = ReplyEntity(tid = threadId, replyContent = replyContent)
+        val replyEntity = ReplyEntity(tid = threadId, replyContent = replyContent, uid = tokenObj!!.uid)
         replyRepo.save(replyEntity)
     }
 }

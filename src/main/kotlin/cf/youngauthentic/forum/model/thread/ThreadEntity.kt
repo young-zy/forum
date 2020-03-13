@@ -10,7 +10,7 @@ import javax.persistence.*
 data class ThreadEntity(
         @Id
         @Column(name = "tid", nullable = false, precision = 0)
-        @GeneratedValue(strategy = GenerationType.AUTO)
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         var tid: Int = 0,
         @Basic
         @Column(name = "sid", nullable = false, precision = 0)
@@ -25,6 +25,9 @@ data class ThreadEntity(
         @Column(name = "lastReplyTime", nullable = true)
         var lastReplyTime: Timestamp = Timestamp(System.currentTimeMillis()),
         @Basic
+        @Column(name = "lastReplyUid", nullable = true)
+        var lastReplyUid: Int = 0,
+        @Basic
         @Column(name = "hasBestAnswer", nullable = true)
         var hasBestAnswer: Boolean = false,
         @Basic
@@ -37,7 +40,7 @@ data class ThreadEntity(
         @JoinColumn(name = "uid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
         var userByUid: UserEntity? = null,
         @ManyToOne
-        @JoinColumn(name = "lastReplyUid", referencedColumnName = "uid", nullable = false)
+        @JoinColumn(name = "lastReplyUid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
         var userByLastReplyUid: UserEntity? = null,
         @OneToMany
         var replies: List<ReplyEntity>? = null

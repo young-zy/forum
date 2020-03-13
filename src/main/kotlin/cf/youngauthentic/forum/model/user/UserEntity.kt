@@ -9,7 +9,7 @@ import javax.persistence.*
 data class UserEntity(
         @Column(name = "uid", nullable = false)
         @Id
-        @GeneratedValue(strategy = GenerationType.AUTO)
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         var uid: Int = 0,
         @Column(name = "username", nullable = false, length = 45)
         @Basic

@@ -11,4 +11,6 @@ interface ThreadInListProjection {
     val lastReplyTime: Timestamp
     val postTime: Timestamp
     val userByUid: SimpleUser
+    val isQuestion: Boolean
+    val hasBestAnswer: Boolean
 }

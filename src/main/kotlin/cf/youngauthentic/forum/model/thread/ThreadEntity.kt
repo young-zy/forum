@@ -16,19 +16,25 @@ data class ThreadEntity(
         @Column(name = "sid", nullable = false, precision = 0)
         var sid: Int = 0,
         @Basic
+        @Column(name = "uid", nullable = false)
+        var uid: Int = 0,
+        @Basic
         @Column(name = "title", nullable = false, length = 45)
         var title: String = "",
         @Basic
         @Column(name = "lastReplyTime", nullable = true)
-        var lastReplyTime: Timestamp = Timestamp(0),
+        var lastReplyTime: Timestamp = Timestamp(System.currentTimeMillis()),
         @Basic
         @Column(name = "hasBestAnswer", nullable = true)
         var hasBestAnswer: Boolean = false,
         @Basic
         @Column(name = "postTime", nullable = false)
-        var postTime: Timestamp = Timestamp(0),
+        var postTime: Timestamp = Timestamp(System.currentTimeMillis()),
+        @Basic
+        @Column(name = "isQuestion", nullable = false)
+        var question: Boolean,
         @ManyToOne
-        @JoinColumn(name = "uid", referencedColumnName = "uid", nullable = false)
+        @JoinColumn(name = "uid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
         var userByUid: UserEntity? = null,
         @ManyToOne
         @JoinColumn(name = "lastReplyUid", referencedColumnName = "uid", nullable = false)

@@ -10,7 +10,8 @@ plugins {
 }
 
 noArg {
-    invokeInitializers = false
+    invokeInitializers = true
+    annotation("org.springframework.data.redis.core.RedisHash")
 }
 
 group = "cf.youngauthentic"
@@ -60,3 +61,5 @@ tasks.withType<KotlinCompile> {
         jvmTarget = "1.8"
     }
 }
+
+

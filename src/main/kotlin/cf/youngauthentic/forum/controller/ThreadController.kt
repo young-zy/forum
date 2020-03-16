@@ -1,11 +1,13 @@
 package cf.youngauthentic.forum.controller
 
+import cf.youngauthentic.forum.controller.request.PostReplyRequest
 import cf.youngauthentic.forum.controller.request.PostThreadRequest
 import cf.youngauthentic.forum.controller.response.Response
 import cf.youngauthentic.forum.controller.response.ThreadResponse
 import cf.youngauthentic.forum.service.RateLimitService
 import cf.youngauthentic.forum.service.ThreadService
 import cf.youngauthentic.forum.service.exception.AuthException
+import cf.youngauthentic.forum.service.exception.NotFoundException
 import cf.youngauthentic.forum.service.exception.RateLimitExceededException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -27,16 +29,22 @@ class ThreadController {
 
     @PostMapping("/thread/{threadId}/reply")
     fun postReply(@RequestHeader headers: Map<String, String>,
-                  @PathVariable threadId: String): ResponseEntity<Response> {
+                  @PathVariable threadId: String,
+                  @RequestBody replyRequest: PostReplyRequest): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
         try {
             rateLimitService.buildHeader(headers, responseHeaders)
-
+            threadService.postReply(headers["token"] ?: "", threadId.toInt(), replyRequest.replyContent)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message ?: "")
+        } catch (e: NotFoundException) {
+            status = HttpStatus.NOT_FOUND
+            responseBody = Response(false, e.message)
+        } catch (e: AuthException) {
+            status = HttpStatus.UNAUTHORIZED
         } catch (e: Exception) {
             status = HttpStatus.INTERNAL_SERVER_ERROR
             logger.warn(e.stackTrace.toString())
@@ -99,6 +107,9 @@ class ThreadController {
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message ?: "")
+        } catch (e: NotFoundException) {
+            status = HttpStatus.NOT_FOUND
+            responseBody = Response(false, e.message)
         } catch (e: AuthException) {
             status = HttpStatus.UNAUTHORIZED
         } catch (e: Exception) {

@@ -1,6 +1,7 @@
 package cf.youngauthentic.forum.service
 
 import cf.youngauthentic.forum.model.Token
+import cf.youngauthentic.forum.model.user.UserAuth
 import cf.youngauthentic.forum.model.user.UserEntity
 import cf.youngauthentic.forum.service.exception.PasswordIncorrectException
 import cf.youngauthentic.forum.service.exception.UsernameIncorrectException
@@ -14,12 +15,20 @@ import kotlin.math.abs
 @Service
 class LoginService {
 
-    //    @Autowired
-//    private lateinit var tokenRedisRepository: TokenRedisRepository
     @Autowired
     private lateinit var userService: UserService
+
     @Autowired
     private lateinit var tokenRedisTemplate: RedisTemplate<String, Token>
+
+    /**
+     * @author young-zy
+     * @param token token string
+     * @return uid of the token if exists, else returns -1
+     */
+    fun getToken(token: String?): Token? {
+        return (tokenRedisTemplate.opsForValue().get(token ?: ""))
+    }
 
     /**
      * @author young-zy
@@ -35,8 +44,8 @@ class LoginService {
      * @param token token string
      * @return auth of the token if exists, else returns empty string
      */
-    fun getAuth(token: String): String {
-        return (tokenRedisTemplate.opsForValue().get(token) ?: return "UnLoggedIn").auth
+    fun getAuth(token: String): UserAuth? {
+        return (tokenRedisTemplate.opsForValue().get(token) ?: return null).auth
     }
 
     /**
@@ -64,6 +73,7 @@ class LoginService {
      * @throws UsernameIncorrectException when username doesn't exist
      * @throws PasswordIncorrectException when password is not correct
      */
+    @Throws(PasswordIncorrectException::class, UsernameIncorrectException::class)
     fun login(username: String, password: String): String {
         val user: UserEntity = userService.getUser(username) ?: throw UsernameIncorrectException()
         return if (PasswordHash.validatePassword(password, user.hashedPassword)) {
@@ -72,7 +82,11 @@ class LoginService {
             random.nextBytes(bytes)
             val longToken = abs(random.nextLong())
             val tokenStr = longToken.toString(16)
-            val token = Token("$username:$tokenStr", user.uid, user.username, user.auth)
+            val token = Token(
+                    "$username:$tokenStr",
+                    user.uid,
+                    user.username,
+                    user.auth)
             tokenRedisTemplate.opsForValue().set(token.token, token, 1, TimeUnit.DAYS)
             token.token
         } else {

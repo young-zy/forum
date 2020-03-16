@@ -4,6 +4,7 @@ import cf.youngauthentic.forum.model.reply.ReplyEntity
 import cf.youngauthentic.forum.model.reply.ReplyObject
 import cf.youngauthentic.forum.model.thread.ThreadEntity
 import cf.youngauthentic.forum.model.thread.ThreadObject
+import cf.youngauthentic.forum.model.vote.VoteEntity
 import cf.youngauthentic.forum.repo.ReplyRepository
 import cf.youngauthentic.forum.repo.ThreadRepository
 import cf.youngauthentic.forum.repo.VoteRepository
@@ -14,6 +15,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.sql.Timestamp
 
 @Service
 class ThreadService {

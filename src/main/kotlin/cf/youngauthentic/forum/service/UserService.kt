@@ -4,6 +4,7 @@ import cf.youngauthentic.forum.model.user.DetailedUser
 import cf.youngauthentic.forum.model.user.UserAuth
 import cf.youngauthentic.forum.model.user.UserEntity
 import cf.youngauthentic.forum.repo.UserRepository
+import cf.youngauthentic.forum.service.exception.AuthException
 import cf.youngauthentic.forum.service.exception.NotFoundException
 import cf.youngauthentic.forum.service.exception.PasswordIncorrectException
 import cf.youngauthentic.forum.service.exception.UsernameExistsException
@@ -17,10 +18,15 @@ class UserService {
 
     @Autowired
     private lateinit var userRepository: UserRepository
+
     @Autowired
     private lateinit var loginService: LoginService
+
     @Autowired
     private lateinit var regexService: RegexService
+
+    @Autowired
+    private lateinit var sectionService: SectionService
 
     /**
      * get UserEntity through provided username
@@ -37,7 +43,7 @@ class UserService {
      * @return UserEntity
      */
     fun getUser(uid: Int): UserEntity {
-        return userRepository.findByUid(uid)
+        return userRepository.findByUid(uid) ?: throw NotFoundException("uid $uid not found")
     }
 
     /**
@@ -50,7 +56,8 @@ class UserService {
     }
 
     fun getDetailedUser(uid: Int): DetailedUser {
-        return userRepository.findDetailedUserEntityByUid(uid) ?: throw NotFoundException()
+        // TODO hasAuth
+        return userRepository.findDetailedUserEntityByUid(uid) ?: throw NotFoundException("uid $uid not found")
     }
 
     /**
@@ -93,7 +100,7 @@ class UserService {
      * @throws IllegalArgumentException when password or email doesn't fit regex
      */
     @Transactional
-    @Throws(PasswordIncorrectException::class, UsernameExistsException::class, IllegalArgumentException::class)
+    @Throws(PasswordIncorrectException::class, UsernameExistsException::class, IllegalArgumentException::class, AuthException::class)
     fun userInfoUpdate(token: String, originalPassword: String, newPassword: String?, newUsername: String?, newEmail: String?) {
         val uid = loginService.getUid(token)
         val userEntity = getUser(uid)
@@ -120,4 +127,104 @@ class UserService {
         userRepository.save(userEntity)
     }
 
+    /**
+     * Adds the users in list's auth of System Admin
+     * # NOTE: If any of the user in list does not exist, none of the changes will be commit
+     * @author young-zy
+     * @param token token of operating user
+     * @param userIds list of userId to be given the right of system admin
+     * @throws NotFoundException when user doesn't exist
+     * @throws AuthException when operator's auth is not enough
+     */
+    @Transactional
+    @Throws(NotFoundException::class, AuthException::class)
+    fun giveSystemAdmin(token: String, userIds: List<Int>) {
+        val tokenObj = loginService.getToken(token)
+        //TODO hasAuth
+        userIds.forEach {
+            val user = getUser(it)
+            user.auth.isSystemAdmin = false
+            userRepository.save(user)
+        }
+    }
+
+    /**
+     * Revoke the users in list's auth of System Admin
+     * # NOTE: If any of the user in list does not exist, none of the changes will be commit
+     * @author young-zy
+     * @param token token of operating user
+     * @param userIds list of userId to be given the right of system admin
+     * @throws NotFoundException when user doesn't exist
+     * @throws AuthException when operator's auth is not enough
+     */
+    @Transactional
+    @Throws(NotFoundException::class, AuthException::class)
+    fun revokeSystemAdmin(token: String, userIds: List<Int>) {
+        val tokenObj = loginService.getToken(token)
+        //TODO hasAuth
+        userIds.forEach {
+            val user = getUser(it)
+            user.auth.isSystemAdmin = false
+            userRepository.save(user)
+        }
+    }
+
+    /**
+     * Adds the users in list's auth as section admin of the given section list
+     * # NOTE: If any of the user or section in list does not exist, none of the changes will be commit
+     * @author young-zy
+     * @param token token of operating user
+     * @param userIds list of userId to be given the right of system admin
+     * @param sectionIds list of sectionId
+     * @throws NotFoundException when user or section doesn't exist
+     * @throws AuthException when operator's auth is not enough
+     */
+    @Transactional
+    @Throws(NotFoundException::class, AuthException::class)
+    fun giveSectionAdmin(token: String, userIds: List<Int>, sectionIds: List<Int>) {
+        val tokenObj = loginService.getToken(token)
+        //TODO hasAuth
+        userIds.forEach {
+            val user = getUser(it)
+            user.auth.isSectionAdmin = true
+            sectionIds.forEach { sid ->
+                if (!sectionService.hasSection(sid)) {
+                    throw NotFoundException("section $sid not found")
+                }
+                user.auth.sections.add(sid)
+            }
+            userRepository.save(user)
+        }
+    }
+
+    /**
+     * Revoke the users in list's auth as section admin of the given section list
+     * # NOTE: If any of the user or section in list does not exist, none of the changes will be commit
+     * ## NOTE: If any of the user is not the admin of one of the section in list, this section will be ignored for this user instead of throwing an exception
+     * @author young-zy
+     * @param token token of operating user
+     * @param userIds list of userId to be given the right of system admin
+     * @param sectionIds list of sectionId
+     * @throws NotFoundException when user or section doesn't exist
+     * @throws AuthException when operator's auth is not enough
+     */
+    @Transactional
+    @Throws(NotFoundException::class, AuthException::class)
+    fun revokeSectionAdmin(token: String, userIds: List<Int>, sectionIds: List<Int>) {
+        val tokenObj = loginService.getToken(token)
+        //TODO hasAuth
+        userIds.forEach {
+            val user = getUser(it)
+            sectionIds.forEach { sid ->
+                if (!sectionService.hasSection(sid)) {
+                    throw NotFoundException("section $sid not found")
+                }
+                user.auth.sections.remove(sid)
+            }
+            if (user.auth.sections.isEmpty()) {
+                user.auth.isSectionAdmin = false
+            }
+            userRepository.save(user)
+        }
+    }
 }

@@ -5,5 +5,5 @@ import cf.youngauthentic.forum.model.vote.VoteEntityPK
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface VoteRepository : JpaRepository<VoteEntity, VoteEntityPK> {
-    fun findVoteEntityByUidAndRid(uid: Int, rid: Int): VoteEntity
+    fun findVoteEntityByUidAndRid(uid: Int, rid: Int): VoteEntity?
 }

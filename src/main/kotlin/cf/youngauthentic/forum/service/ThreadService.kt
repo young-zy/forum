@@ -104,4 +104,61 @@ class ThreadService {
         val replyEntity = ReplyEntity(tid = threadId, replyContent = replyContent, uid = tokenObj!!.uid)
         replyRepo.save(replyEntity)
     }
+
+    /**
+     * update the content of the reply
+     * @author young-zy
+     * @param token token of the operator
+     * @param replyId reply id of the reply tobe updated
+     * @param replyContent the content of the new reply
+     * @throws NotFoundException when reply is not found
+     * @throws AuthException when operator's auth is not enough
+     */
+    @Transactional
+    @Throws(NotFoundException::class, AuthException::class)
+    fun updateReply(token: String, replyId: Int, replyContent: String) {
+        val tokenObj = loginService.getToken(token)
+        val replyEntity: ReplyEntity = replyRepo.findByRid(replyId) ?: throw NotFoundException("reply not found")
+        // TODO hasAuth
+        replyEntity.replyContent = replyContent
+        replyEntity.lastEditTime = Timestamp(System.currentTimeMillis())
+        replyRepo.save(replyEntity)
+    }
+
+    /**
+     * @author young-zy
+     * @param token token of the operator
+     * @param replyId reply tobe deleted
+     * @throws NotFoundException when reply not found
+     * @throws AuthException when operator's auth is not enough
+     */
+    @Transactional
+    @Throws(NotFoundException::class, AuthException::class)
+    fun deleteReply(token: String, replyId: Int) {
+        val tokenObject = loginService.getToken(token)
+        val replyEntity: ReplyEntity = replyRepo.findByRid(replyId)
+                ?: throw NotFoundException("reply $replyId not found")
+        // TODO hasAuth
+        replyRepo.delete(replyEntity)
+    }
+
+    /**
+     * set the vote of a reply
+     * if the reply is not in a question, nothing will be done
+     * @author young-zy
+     * @param token token of the operator
+     * @param rid reply tobe voted
+     * @param state state tobe set to the reply
+     */
+    @Transactional
+    @Throws(AuthException::class, AuthException::class)
+    fun vote(token: String, rid: Int, state: Int) {
+        val tokenObj = loginService.getToken(token)
+        //TODO has auth
+        if (!(replyRepo.findByRid(rid)?.threadByTid?.question ?: throw NotFoundException("reply $rid not found"))) {
+            return
+        }
+        val voteEntity = VoteEntity(tokenObj!!.uid, rid, state)
+        voteRepo.save(voteEntity)
+    }
 }

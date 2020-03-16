@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface ReplyRepository : JpaRepository<ReplyEntity, Int> {
     fun findAllByTid(tid: Int, pageable: Pageable): List<ReplyProjection>
+
+    fun findByRid(rid: Int): ReplyEntity?
 }

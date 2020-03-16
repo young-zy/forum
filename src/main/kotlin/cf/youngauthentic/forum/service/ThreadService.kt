@@ -52,7 +52,11 @@ class ThreadService {
             replyObject = ReplyObject(it)
             //search for vote info if is a question
             if (thread.isQuestion) {
-                replyObject.vote = voteRepo.findVoteEntityByUidAndRid(tokenObj!!.uid, it.rid).vote
+                if (tokenObj == null) {
+                    replyObject.vote = 0
+                } else {
+                    replyObject.vote = voteRepo.findVoteEntityByUidAndRid(tokenObj.uid, it.rid)?.vote ?: 0
+                }
             }
             replies.add(replyObject)
         }

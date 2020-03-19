@@ -42,7 +42,7 @@ data class ThreadEntity(
         @ManyToOne
         @JoinColumn(name = "lastReplyUid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
         var userByLastReplyUid: UserEntity? = null,
-        @OneToMany
+        @OneToMany(fetch = FetchType.LAZY)
         var replies: List<ReplyEntity>? = null
 
 )

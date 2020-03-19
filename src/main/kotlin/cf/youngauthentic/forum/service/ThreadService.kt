@@ -41,9 +41,11 @@ class ThreadService {
      * @throws NotFoundException when thread not found
      * @throws AuthException when user's auth is not enough
      */
+    @Throws(NotFoundException::class, AuthException::class)
     fun getThread(token: String, threadId: Int, page: Int = 1, size: Int = 10): ThreadObject {
         val tokenObj = loginService.getToken(token)
-        val threadProjection = threadRepo.findByTid(threadId)
+        // TODO hasAuth
+        val threadProjection = threadRepo.findByTid(threadId) ?: throw NotFoundException("thread $threadId not found")
         val thread = ThreadObject(threadProjection)
         val repliesProjection = replyRepo.findAllByTid(threadId,
                 PageRequest.of(page - 1, size,

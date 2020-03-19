@@ -110,6 +110,25 @@ class ThreadService {
     }
 
     /**
+     *  delete a thread and all of it's replies
+     *  @author young-zy
+     *  @param token token of the operator
+     *  @param threadId thread to be delete
+     *  @throws NotFoundException when thread not found
+     *  @throws AuthException when operator's auth is not enough
+     */
+    @Transactional
+    @Throws(AuthException::class, NotFoundException::class)
+    fun deleteThread(token: String, threadId: Int) {
+        val tokenObj = loginService.getToken(token)
+        val thread = threadRepo.findThreadEntityByTid(threadId) ?: throw NotFoundException("thread $threadId not found")
+        // TODO hasAuth
+        threadRepo.delete(thread)
+        replyRepo.deleteAllByTid(threadId)
+    }
+
+
+    /**
      * update the content of the reply
      * @author young-zy
      * @param token token of the operator

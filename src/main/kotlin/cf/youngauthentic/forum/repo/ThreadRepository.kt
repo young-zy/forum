@@ -10,5 +10,7 @@ interface ThreadRepository : JpaRepository<ThreadEntity, Int> {
 
     fun findAllBySid(sid: Int, page: Pageable): List<ThreadInListProjection>
 
-    fun findByTid(tid: Int): ThreadProjection
+    fun findByTid(tid: Int): ThreadProjection?
+
+    fun findThreadEntityByTid(tid: Int): ThreadEntity?
 }

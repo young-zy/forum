@@ -28,6 +28,9 @@ class UserService {
     @Autowired
     private lateinit var sectionService: SectionService
 
+    @Autowired
+    private lateinit var authService: AuthService
+
     /**
      * get UserEntity through provided username
      * @param username username of the user
@@ -55,8 +58,9 @@ class UserService {
         return userRepository.existsByUsername(username)
     }
 
-    fun getDetailedUser(uid: Int): DetailedUser {
-        // TODO hasAuth
+    fun getDetailedUser(token: String, uid: Int): DetailedUser {
+        val tokenObj = loginService.getToken(token)
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER, allowAuthor = true))
         return userRepository.findDetailedUserEntityByUid(uid) ?: throw NotFoundException("uid $uid not found")
     }
 
@@ -102,8 +106,9 @@ class UserService {
     @Transactional
     @Throws(PasswordIncorrectException::class, UsernameExistsException::class, IllegalArgumentException::class, AuthException::class)
     fun userInfoUpdate(token: String, originalPassword: String, newPassword: String?, newUsername: String?, newEmail: String?) {
-        val uid = loginService.getUid(token)
-        val userEntity = getUser(uid)
+        val tokenObj = loginService.getToken(token)
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
+        val userEntity = getUser(tokenObj!!.uid)
         if (!PasswordHash.validatePassword(originalPassword, userEntity.hashedPassword)) {
             throw PasswordIncorrectException()
         }
@@ -140,7 +145,7 @@ class UserService {
     @Throws(NotFoundException::class, AuthException::class)
     fun giveSystemAdmin(token: String, userIds: List<Int>) {
         val tokenObj = loginService.getToken(token)
-        //TODO hasAuth
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
         userIds.forEach {
             val user = getUser(it)
             user.auth.isSystemAdmin = false
@@ -161,7 +166,7 @@ class UserService {
     @Throws(NotFoundException::class, AuthException::class)
     fun revokeSystemAdmin(token: String, userIds: List<Int>) {
         val tokenObj = loginService.getToken(token)
-        //TODO hasAuth
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
         userIds.forEach {
             val user = getUser(it)
             user.auth.isSystemAdmin = false
@@ -183,7 +188,7 @@ class UserService {
     @Throws(NotFoundException::class, AuthException::class)
     fun giveSectionAdmin(token: String, userIds: List<Int>, sectionIds: List<Int>) {
         val tokenObj = loginService.getToken(token)
-        //TODO hasAuth
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
         userIds.forEach {
             val user = getUser(it)
             user.auth.isSectionAdmin = true
@@ -212,7 +217,7 @@ class UserService {
     @Throws(NotFoundException::class, AuthException::class)
     fun revokeSectionAdmin(token: String, userIds: List<Int>, sectionIds: List<Int>) {
         val tokenObj = loginService.getToken(token)
-        //TODO hasAuth
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
         userIds.forEach {
             val user = getUser(it)
             sectionIds.forEach { sid ->

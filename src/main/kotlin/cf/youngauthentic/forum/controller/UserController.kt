@@ -41,7 +41,7 @@ class UserController {
         var responseBody: Response? = null
         try {
             rateLimitService.buildHeader(headers, responseHeaders)
-            responseBody = UserResponse(userService.getDetailedUser(userId.toInt()))
+            responseBody = UserResponse(userService.getDetailedUser(headers["token"] ?: "", userId.toInt()))
         } catch (e: AuthException) {
             responseStatus = HttpStatus.UNAUTHORIZED
         } catch (e: RateLimitExceededException) {

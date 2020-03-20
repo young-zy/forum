@@ -31,6 +31,9 @@ class ThreadService {
     @Autowired
     lateinit var voteRepo: VoteRepository
 
+    @Autowired
+    lateinit var authService: AuthService
+
     /**
      * get the thread of the given threadId
      *
@@ -44,7 +47,7 @@ class ThreadService {
     @Throws(NotFoundException::class, AuthException::class)
     fun getThread(token: String, threadId: Int, page: Int = 1, size: Int = 10): ThreadObject {
         val tokenObj = loginService.getToken(token)
-        // TODO hasAuth
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
         val threadProjection = threadRepo.findByTid(threadId) ?: throw NotFoundException("thread $threadId not found")
         val thread = ThreadObject(threadProjection)
         val repliesProjection = replyRepo.findAllByTid(threadId,
@@ -82,7 +85,7 @@ class ThreadService {
     @Throws(AuthException::class, NotFoundException::class)
     fun postThread(token: String?, sectionId: Int, title: String, content: String, isQuestion: Boolean) {
         val tokenObj = loginService.getToken(token)
-        //TODO hasAuth
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
         val thread = ThreadEntity(sid = sectionId, title = title, uid = tokenObj!!.uid, question = isQuestion, lastReplyUid = tokenObj.uid)
         threadRepo.saveAndFlush(thread)
         val replyEntity = ReplyEntity(tid = thread.tid, replyContent = content, priority = 9999.9999, uid = thread.uid)
@@ -104,7 +107,7 @@ class ThreadService {
         if (!threadRepo.existsById(threadId)) {
             throw NotFoundException("thread not found")
         }
-        // TODO hasAuth
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
         val replyEntity = ReplyEntity(tid = threadId, replyContent = replyContent, uid = tokenObj!!.uid)
         replyRepo.save(replyEntity)
     }
@@ -122,7 +125,10 @@ class ThreadService {
     fun deleteThread(token: String, threadId: Int) {
         val tokenObj = loginService.getToken(token)
         val thread = threadRepo.findThreadEntityByTid(threadId) ?: throw NotFoundException("thread $threadId not found")
-        // TODO hasAuth
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SECTION_ADMIN,
+                allowAuthor = true,
+                allowOnlyAuthor = false,
+                sectionId = thread.sid))
         threadRepo.delete(thread)
         replyRepo.deleteAllByTid(threadId)
     }
@@ -142,7 +148,10 @@ class ThreadService {
     fun updateReply(token: String, replyId: Int, replyContent: String) {
         val tokenObj = loginService.getToken(token)
         val replyEntity: ReplyEntity = replyRepo.findByRid(replyId) ?: throw NotFoundException("reply not found")
-        // TODO hasAuth
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN,
+                allowAuthor = true,
+                allowOnlyAuthor = true,
+                authorUid = replyEntity.uid))
         replyEntity.replyContent = replyContent
         replyEntity.lastEditTime = Timestamp(System.currentTimeMillis())
         replyRepo.save(replyEntity)
@@ -158,10 +167,16 @@ class ThreadService {
     @Transactional
     @Throws(NotFoundException::class, AuthException::class)
     fun deleteReply(token: String, replyId: Int) {
-        val tokenObject = loginService.getToken(token)
+        val tokenObj = loginService.getToken(token)
         val replyEntity: ReplyEntity = replyRepo.findByRid(replyId)
                 ?: throw NotFoundException("reply $replyId not found")
-        // TODO hasAuth
+        val threadEntity = threadRepo.findThreadEntityByTid(replyEntity.tid)
+                ?: throw NotFoundException("thread $replyEntity.tid not found")
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SECTION_ADMIN,
+                allowAuthor = true,
+                allowOnlyAuthor = false,
+                authorUid = replyEntity.uid,
+                sectionId = threadEntity.sid))
         replyRepo.delete(replyEntity)
     }
 

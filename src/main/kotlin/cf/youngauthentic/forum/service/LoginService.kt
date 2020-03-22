@@ -3,8 +3,7 @@ package cf.youngauthentic.forum.service
 import cf.youngauthentic.forum.model.Token
 import cf.youngauthentic.forum.model.user.UserAuth
 import cf.youngauthentic.forum.model.user.UserEntity
-import cf.youngauthentic.forum.service.exception.PasswordIncorrectException
-import cf.youngauthentic.forum.service.exception.UsernameIncorrectException
+import cf.youngauthentic.forum.service.exception.NotAcceptableException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
@@ -70,12 +69,12 @@ class LoginService {
      * @param username username of user
      * @param password password of user
      * @return generated token of user
-     * @throws UsernameIncorrectException when username doesn't exist
-     * @throws PasswordIncorrectException when password is not correct
+     * @throws NotAcceptableException when username doesn't exist or password incorrect
      */
-    @Throws(PasswordIncorrectException::class, UsernameIncorrectException::class)
+    @Throws(NotAcceptableException::class)
     fun login(username: String, password: String): String {
-        val user: UserEntity = userService.getUser(username) ?: throw UsernameIncorrectException()
+        val user: UserEntity = userService.getUser(username)
+                ?: throw NotAcceptableException("username $username does not exist")
         return if (PasswordHash.validatePassword(password, user.hashedPassword)) {
             val random = SecureRandom()
             val bytes = ByteArray(20)
@@ -90,7 +89,7 @@ class LoginService {
             tokenRedisTemplate.opsForValue().set(token.token, token, 1, TimeUnit.DAYS)
             token.token
         } else {
-            throw PasswordIncorrectException()
+            throw NotAcceptableException("Password Incorrect")
         }
     }
 

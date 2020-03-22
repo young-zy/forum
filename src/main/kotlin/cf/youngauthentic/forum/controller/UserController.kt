@@ -9,7 +9,10 @@ import cf.youngauthentic.forum.controller.response.UserResponse
 import cf.youngauthentic.forum.service.LoginService
 import cf.youngauthentic.forum.service.RateLimitService
 import cf.youngauthentic.forum.service.UserService
-import cf.youngauthentic.forum.service.exception.*
+import cf.youngauthentic.forum.service.exception.AuthException
+import cf.youngauthentic.forum.service.exception.NotAcceptableException
+import cf.youngauthentic.forum.service.exception.NotFoundException
+import cf.youngauthentic.forum.service.exception.RateLimitExceededException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -46,7 +49,7 @@ class UserController {
             responseStatus = HttpStatus.UNAUTHORIZED
         } catch (e: RateLimitExceededException) {
             responseStatus = HttpStatus.TOO_MANY_REQUESTS
-            responseBody = Response(false, "API request rate exceeded the limit")
+            responseBody = Response(false, e.message)
         } catch (e: NotFoundException) {
             responseStatus = HttpStatus.NOT_FOUND
             responseBody = Response(false, e.message)
@@ -116,7 +119,7 @@ class UserController {
             responseBody = Response(false, e.message)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
-            responseBody = Response(false, e.message ?: "")
+            responseBody = Response(false, e.message)
         } catch (e: Exception) {
             status = HttpStatus.INTERNAL_SERVER_ERROR
             responseBody = Response(false, e.message ?: "")
@@ -170,7 +173,7 @@ class UserController {
             loginService.logout(headers["token"] ?: error("token not found in header"))
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
-            responseBody = Response(false, e.message ?: "")
+            responseBody = Response(false, e.message)
         } catch (e: Exception) {
             logger.warn(e.stackTrace.toString())
             status = HttpStatus.INTERNAL_SERVER_ERROR

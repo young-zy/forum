@@ -9,6 +9,7 @@ import cf.youngauthentic.forum.repo.ReplyRepository
 import cf.youngauthentic.forum.repo.ThreadRepository
 import cf.youngauthentic.forum.repo.VoteRepository
 import cf.youngauthentic.forum.service.exception.AuthException
+import cf.youngauthentic.forum.service.exception.NotAcceptableException
 import cf.youngauthentic.forum.service.exception.NotFoundException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.PageRequest

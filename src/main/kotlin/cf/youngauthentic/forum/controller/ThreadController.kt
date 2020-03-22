@@ -40,7 +40,7 @@ class ThreadController {
             threadService.postReply(headers["token"] ?: "", threadId.toInt(), replyRequest.replyContent)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
-            responseBody = Response(false, e.message ?: "")
+            responseBody = Response(false, e.message)
         } catch (e: NotFoundException) {
             status = HttpStatus.NOT_FOUND
             responseBody = Response(false, e.message)
@@ -77,7 +77,7 @@ class ThreadController {
             )
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
-            responseBody = Response(false, e.message ?: "")
+            responseBody = Response(false, e.message)
         } catch (e: AuthException) {
             status = HttpStatus.UNAUTHORIZED
         } catch (e: Exception) {
@@ -107,7 +107,35 @@ class ThreadController {
             responseBody = ThreadResponse(thread)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message)
+        } catch (e: NotFoundException) {
+            status = HttpStatus.NOT_FOUND
+            responseBody = Response(false, e.message)
+        } catch (e: AuthException) {
+            status = HttpStatus.UNAUTHORIZED
+        } catch (e: Exception) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR
+            logger.warn(e.stackTrace.toString())
             responseBody = Response(false, e.message ?: "")
+        } finally {
+            return ResponseEntity
+                    .status(status)
+                    .headers(responseHeaders)
+                    .body(responseBody)
+        }
+    }
+
+    @PutMapping("/reply/{replyId}/vote")
+    fun updateVote(@PathVariable replyId: String, @RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
+        var responseBody: Response? = null
+        var status = HttpStatus.OK
+        val responseHeaders = HttpHeaders()
+        try {
+            rateLimitService.buildHeader(headers, responseHeaders)
+            threadService.vote(headers["token"] ?: "", replyId.toInt(), state = 0)
+        } catch (e: RateLimitExceededException) {
+            status = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message)
         } catch (e: NotFoundException) {
             status = HttpStatus.NOT_FOUND
             responseBody = Response(false, e.message)
@@ -137,7 +165,7 @@ class ThreadController {
             threadService.updateReply(headers["token"] ?: "", replyId.toInt(), requestBody.replyContent)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
-            responseBody = Response(false, e.message ?: "")
+            responseBody = Response(false, e.message)
         } catch (e: NotFoundException) {
             status = HttpStatus.NOT_FOUND
             responseBody = Response(false, e.message)
@@ -165,7 +193,7 @@ class ThreadController {
             threadService.deleteReply(headers["token"] ?: "", replyId.toInt())
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
-            responseBody = Response(false, e.message ?: "")
+            responseBody = Response(false, e.message)
         } catch (e: NotFoundException) {
             status = HttpStatus.NOT_FOUND
             responseBody = Response(false, e.message)
@@ -193,7 +221,7 @@ class ThreadController {
             threadService.deleteThread(headers["token"] ?: "", threadId.toInt())
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
-            responseBody = Response(false, e.message ?: "")
+            responseBody = Response(false, e.message)
         } catch (e: NotFoundException) {
             status = HttpStatus.NOT_FOUND
             responseBody = Response(false, e.message)

@@ -189,12 +189,12 @@ class ThreadService {
      * @param state state tobe set to the reply
      */
     @Transactional
-    @Throws(AuthException::class, AuthException::class)
+    @Throws(AuthException::class, NotFoundException::class, NotAcceptableException::class)
     fun vote(token: String, rid: Int, state: Int) {
         val tokenObj = loginService.getToken(token)
-        //TODO has auth
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
         if (!(replyRepo.findByRid(rid)?.threadByTid?.question ?: throw NotFoundException("reply $rid not found"))) {
-            return
+            throw NotAcceptableException("reply $rid is not in a thread that s a question")
         }
         val voteEntity = VoteEntity(tokenObj!!.uid, rid, state)
         voteRepo.save(voteEntity)

@@ -5,9 +5,8 @@ import cf.youngauthentic.forum.model.user.UserAuth
 import cf.youngauthentic.forum.model.user.UserEntity
 import cf.youngauthentic.forum.repo.UserRepository
 import cf.youngauthentic.forum.service.exception.AuthException
+import cf.youngauthentic.forum.service.exception.NotAcceptableException
 import cf.youngauthentic.forum.service.exception.NotFoundException
-import cf.youngauthentic.forum.service.exception.PasswordIncorrectException
-import cf.youngauthentic.forum.service.exception.UsernameExistsException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -70,13 +69,13 @@ class UserService {
      * @param password password of user
      * @param email email of user
      * @throws IllegalArgumentException when any of the parameter doesn't match regex requirement
-     * @throws UsernameExistsException when the username already exists
+     * @throws NotAcceptableException when the username already exists
      */
     @Transactional
-    @Throws(UsernameExistsException::class, UsernameExistsException::class)
+    @Throws(IllegalArgumentException::class, NotAcceptableException::class)
     fun register(username: String, password: String, email: String) {
         if (existsUsername(username)) {
-            throw UsernameExistsException()
+            throw NotAcceptableException("username $username already exists")
         } else {
             regexService.validateUsername(username)
             regexService.validatePassword(password)
@@ -99,18 +98,17 @@ class UserService {
      * @param newPassword user's new password -- can be null
      * @param newUsername user's new username -- can be null
      * @param newEmail user's new email address -- can be null
-     * @throws PasswordIncorrectException when password is incorrect
-     * @throws UsernameExistsException when username already exists
+     * @throws NotAcceptableException when username already exists or password is incorrect
      * @throws IllegalArgumentException when password or email doesn't fit regex
      */
     @Transactional
-    @Throws(PasswordIncorrectException::class, UsernameExistsException::class, IllegalArgumentException::class, AuthException::class)
+    @Throws(NotAcceptableException::class, NotAcceptableException::class, IllegalArgumentException::class, AuthException::class)
     fun userInfoUpdate(token: String, originalPassword: String, newPassword: String?, newUsername: String?, newEmail: String?) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
         val userEntity = getUser(tokenObj!!.uid)
         if (!PasswordHash.validatePassword(originalPassword, userEntity.hashedPassword)) {
-            throw PasswordIncorrectException()
+            throw NotAcceptableException("Password Incorrect")
         }
         if (newUsername != null) {
             regexService.validateUsername(newUsername)
@@ -123,7 +121,7 @@ class UserService {
         }
         userEntity.email = newEmail ?: userEntity.email
         if (existsUsername(newUsername ?: "")) {
-            throw UsernameExistsException()
+            throw NotAcceptableException("Username $newUsername already exists")
         }
         userEntity.username = newUsername ?: userEntity.username
         if (newPassword != null) {

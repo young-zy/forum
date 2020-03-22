@@ -81,10 +81,10 @@ class UserController {
 
         } catch (e: RateLimitExceededException) {
             responseStatus = HttpStatus.TOO_MANY_REQUESTS
-            responseBody = Response(false, e.message ?: "")
-        } catch (e: PasswordIncorrectException) {
-            responseStatus = HttpStatus.UNAUTHORIZED
-            responseBody = Response(false, e.message ?: "")
+            responseBody = Response(false, e.message)
+        } catch (e: NotAcceptableException) {
+            responseStatus = HttpStatus.NOT_ACCEPTABLE
+            responseBody = Response(false, e.message)
         } catch (e: IllegalArgumentException) {
             responseStatus = HttpStatus.BAD_REQUEST
             responseBody = Response(false, e.message ?: "")
@@ -111,12 +111,9 @@ class UserController {
             rateLimitService.buildHeader(headers, responseHeaders)
             val token = loginService.login(requestBody.username, requestBody.password)
             responseBody = LoginResponse(token)
-        } catch (e: PasswordIncorrectException) {
+        } catch (e: NotAcceptableException) {
             status = HttpStatus.UNAUTHORIZED
-            responseBody = Response(false, "Password Incorrect")
-        } catch (e: UsernameIncorrectException) {
-            status = HttpStatus.UNAUTHORIZED
-            responseBody = Response(false, "Username Incorrect")
+            responseBody = Response(false, e.message)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message ?: "")
@@ -141,11 +138,14 @@ class UserController {
         try {
             rateLimitService.buildHeader(headers, responseHeaders)
             userService.register(request.username, request.password, request.email)
-        } catch (e: UsernameExistsException) {
-            status = HttpStatus.UNAUTHORIZED
-            responseBody = Response(false, "Username already exists")
+        } catch (e: NotAcceptableException) {
+            status = HttpStatus.NOT_ACCEPTABLE
+            responseBody = Response(false, e.message)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message)
+        } catch (e: IllegalArgumentException) {
+            status = HttpStatus.BAD_REQUEST
             responseBody = Response(false, e.message ?: "")
         } catch (e: Exception) {
             status = HttpStatus.INTERNAL_SERVER_ERROR

@@ -21,19 +21,19 @@ import java.sql.Timestamp
 @Service
 class ThreadService {
     @Autowired
-    lateinit var threadRepo: ThreadRepository
+    private lateinit var threadRepo: ThreadRepository
 
     @Autowired
-    lateinit var replyRepo: ReplyRepository
+    private lateinit var replyRepo: ReplyRepository
 
     @Autowired
-    lateinit var loginService: LoginService
+    private lateinit var loginService: LoginService
 
     @Autowired
-    lateinit var voteRepo: VoteRepository
+    private lateinit var voteRepo: VoteRepository
 
     @Autowired
-    lateinit var authService: AuthService
+    private lateinit var authService: AuthService
 
     /**
      * get the thread of the given threadId

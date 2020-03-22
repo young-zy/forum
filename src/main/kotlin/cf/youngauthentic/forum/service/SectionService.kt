@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 class SectionService {
 
     @Autowired
-    lateinit var sectionRepository: SectionRepository
+    private lateinit var sectionRepository: SectionRepository
 
     fun hasSection(sectionId: Int): Boolean {
         return sectionRepository.existsById(sectionId)

@@ -2,13 +2,10 @@ package cf.youngauthentic.forum.service
 
 import cf.youngauthentic.forum.model.Token
 import cf.youngauthentic.forum.service.exception.AuthException
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
 class AuthService {
-    @Autowired
-    lateinit var loginService: LoginService
 
     /**
      * check whether user has permission to the correspond operation

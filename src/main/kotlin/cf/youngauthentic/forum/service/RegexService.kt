@@ -13,18 +13,21 @@ class RegexService {
     //4-20 characters long _, - are allowed, only a-z or A-Z can be used for first character
     private val usernameRegex = Regex("^(?=.{4,20}\$)(?![_0-9])(?!.*[_]{2})[a-zA-Z0-9_-]+(?<![_])\$")
 
+    @Throws(IllegalArgumentException::class)
     fun validateUsername(username: String) {
         if (!usernameRegex.matches(username)) {
             throw IllegalArgumentException("username pattern not correct!")
         }
     }
 
+    @Throws(IllegalArgumentException::class)
     fun validatePassword(password: String) {
         if (!passwordRegex.matches(password)) {
             throw IllegalArgumentException("password pattern not correct!")
         }
     }
 
+    @Throws(IllegalArgumentException::class)
     fun validateEmail(email: String) {
         if (!emailRegex.matches(email)) {
             throw IllegalArgumentException("email pattern not correct!")

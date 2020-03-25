@@ -11,7 +11,6 @@ class ThreadObject(thread: ThreadProjection,
     var title: String = thread.title
     var lastReplyTime: Timestamp = thread.lastReplyTime
     var postTime: Timestamp = thread.postTime
-    var replies: List<ReplyObject>? = null
     val isQuestion: Boolean = thread.question
     val hasBestAnswer: Boolean = thread.hasBestAnswer
 }

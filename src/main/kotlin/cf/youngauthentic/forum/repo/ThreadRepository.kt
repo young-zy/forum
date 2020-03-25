@@ -15,4 +15,6 @@ interface ThreadRepository : JpaRepository<ThreadEntity, Int> {
     fun findByTid(tid: Int): ThreadProjection?
 
     fun findThreadEntityByTid(tid: Int): ThreadEntity?
+
+    fun countBySid(sid: Int): Int
 }

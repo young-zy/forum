@@ -1,5 +1,6 @@
 package cf.youngauthentic.forum.controller
 
+import cf.youngauthentic.forum.config.stackTraceString
 import cf.youngauthentic.forum.controller.request.PostReplyRequest
 import cf.youngauthentic.forum.controller.request.PostThreadRequest
 import cf.youngauthentic.forum.controller.request.UpdateReplyRequest
@@ -48,7 +49,7 @@ class ThreadController {
             status = HttpStatus.UNAUTHORIZED
         } catch (e: Exception) {
             status = HttpStatus.INTERNAL_SERVER_ERROR
-            logger.warn(e.stackTrace.toString())
+            logger.error(e.stackTraceString)
             responseBody = Response(false, e.message ?: "")
         } finally {
             return ResponseEntity
@@ -82,7 +83,7 @@ class ThreadController {
             status = HttpStatus.UNAUTHORIZED
         } catch (e: Exception) {
             status = HttpStatus.INTERNAL_SERVER_ERROR
-            logger.warn(e.stackTrace.toString())
+            logger.error(e.stackTraceString)
             responseBody = Response(false, e.message ?: "")
         } finally {
             return ResponseEntity
@@ -115,7 +116,7 @@ class ThreadController {
             status = HttpStatus.UNAUTHORIZED
         } catch (e: Exception) {
             status = HttpStatus.INTERNAL_SERVER_ERROR
-            logger.warn(e.stackTrace.toString())
+            logger.error(e.stackTraceString)
             responseBody = Response(false, e.message ?: "")
         } finally {
             return ResponseEntity
@@ -143,7 +144,7 @@ class ThreadController {
             status = HttpStatus.UNAUTHORIZED
         } catch (e: Exception) {
             status = HttpStatus.INTERNAL_SERVER_ERROR
-            logger.warn(e.stackTrace.toString())
+            logger.error(e.stackTraceString)
             responseBody = Response(false, e.message ?: "")
         } finally {
             return ResponseEntity
@@ -173,7 +174,7 @@ class ThreadController {
             status = HttpStatus.UNAUTHORIZED
         } catch (e: Exception) {
             status = HttpStatus.INTERNAL_SERVER_ERROR
-            logger.warn(e.stackTrace.toString())
+            logger.error(e.stackTraceString)
             responseBody = Response(false, e.message ?: "")
         } finally {
             return ResponseEntity
@@ -201,7 +202,7 @@ class ThreadController {
             status = HttpStatus.UNAUTHORIZED
         } catch (e: Exception) {
             status = HttpStatus.INTERNAL_SERVER_ERROR
-            logger.warn(e.stackTrace.toString())
+            logger.error(e.stackTraceString)
             responseBody = Response(false, e.message ?: "")
         } finally {
             return ResponseEntity
@@ -229,7 +230,7 @@ class ThreadController {
             status = HttpStatus.UNAUTHORIZED
         } catch (e: Exception) {
             status = HttpStatus.INTERNAL_SERVER_ERROR
-            logger.warn(e.stackTrace.toString())
+            logger.error(e.stackTraceString)
             responseBody = Response(false, e.message ?: "")
         } finally {
             return ResponseEntity

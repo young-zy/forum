@@ -1,5 +1,6 @@
 package cf.youngauthentic.forum.controller
 
+import cf.youngauthentic.forum.config.stackTraceString
 import cf.youngauthentic.forum.controller.request.LoginRequest
 import cf.youngauthentic.forum.controller.request.RegisterRequest
 import cf.youngauthentic.forum.controller.request.UserUpdateRequest
@@ -54,7 +55,7 @@ class UserController {
             responseStatus = HttpStatus.NOT_FOUND
             responseBody = Response(false, e.message)
         } catch (e: Exception) {
-            logger.warn(e.stackTrace.toString())
+            logger.error(e.stackTraceString)
             responseStatus = HttpStatus.INTERNAL_SERVER_ERROR
             responseBody = Response(false, e.message ?: "")
         } finally {
@@ -92,7 +93,7 @@ class UserController {
             responseStatus = HttpStatus.BAD_REQUEST
             responseBody = Response(false, e.message ?: "")
         } catch (e: Exception) {
-            logger.warn(e.stackTrace.toString())
+            logger.error(e.stackTraceString)
             responseBody = Response(false, e.message ?: "")
         } finally {
             return ResponseEntity
@@ -121,6 +122,7 @@ class UserController {
             status = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message)
         } catch (e: Exception) {
+            logger.error(e.stackTraceString)
             status = HttpStatus.INTERNAL_SERVER_ERROR
             responseBody = Response(false, e.message ?: "")
         } finally {
@@ -151,6 +153,7 @@ class UserController {
             status = HttpStatus.BAD_REQUEST
             responseBody = Response(false, e.message ?: "")
         } catch (e: Exception) {
+            logger.error(e.stackTraceString)
             status = HttpStatus.INTERNAL_SERVER_ERROR
             responseBody = Response(false, e.message ?: "")
         } finally {
@@ -175,7 +178,7 @@ class UserController {
             status = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message)
         } catch (e: Exception) {
-            logger.warn(e.stackTrace.toString())
+            logger.error(e.stackTraceString)
             status = HttpStatus.INTERNAL_SERVER_ERROR
             responseBody = Response(false, e.message ?: "")
         } finally {

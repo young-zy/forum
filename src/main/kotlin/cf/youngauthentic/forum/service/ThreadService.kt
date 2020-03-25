@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
+import kotlin.math.ceil
 
 @Service
 class ThreadService {
@@ -50,7 +51,6 @@ class ThreadService {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
         val threadProjection = threadRepo.findByTid(threadId) ?: throw NotFoundException("thread $threadId not found")
-        val thread = ThreadObject(threadProjection)
         val repliesProjection = replyRepo.findAllByTid(threadId,
                 PageRequest.of(page - 1, size,
                         Sort.by("priority").descending()))
@@ -59,7 +59,7 @@ class ThreadService {
         repliesProjection.forEach {
             replyObject = ReplyObject(it)
             //search for vote info if is a question
-            if (thread.isQuestion) {
+            if (threadProjection.question) {
                 if (tokenObj == null) {
                     replyObject.vote = 0
                 } else {
@@ -68,8 +68,12 @@ class ThreadService {
             }
             replies.add(replyObject)
         }
-        thread.replies = replies
-        return thread
+        return ThreadObject(
+                threadProjection,
+                replies,
+                page,
+                ceil(replyRepo.countByTid(threadId) / size.toDouble()).toInt()
+        )
     }
 
     /**

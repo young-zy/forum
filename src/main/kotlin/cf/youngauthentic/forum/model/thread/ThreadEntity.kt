@@ -1,6 +1,5 @@
 package cf.youngauthentic.forum.model.thread
 
-import cf.youngauthentic.forum.model.reply.ReplyEntity
 import cf.youngauthentic.forum.model.user.UserEntity
 import java.sql.Timestamp
 import javax.persistence.*
@@ -41,8 +40,5 @@ data class ThreadEntity(
         var userByUid: UserEntity? = null,
         @ManyToOne
         @JoinColumn(name = "lastReplyUid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
-        var userByLastReplyUid: UserEntity? = null,
-        @OneToMany(fetch = FetchType.LAZY)
-        var replies: List<ReplyEntity>? = null
-
+        var userByLastReplyUid: UserEntity? = null
 )

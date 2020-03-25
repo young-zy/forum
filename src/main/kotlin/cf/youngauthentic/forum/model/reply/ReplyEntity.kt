@@ -26,9 +26,9 @@ data class ReplyEntity(
         @Column(name = "lastEditTime", nullable = false)
         @Basic
         var lastEditTime: Timestamp = Timestamp(System.currentTimeMillis()),
-        @Column(name = "priority", nullable = true, precision = 5, scale = 5)
+        @Column(name = "priority", nullable = false, precision = 5, scale = 5)
         @Basic
-        var priority: Double? = null,
+        var priority: Double = 0.0,
         @Column(name = "is_bestAnswer", nullable = false)
         @Basic
         var bestAnswer: Boolean = false,

@@ -6,11 +6,11 @@ import java.sql.Timestamp
 
 @Projection(types = [ThreadEntity::class])
 interface ThreadInListProjection {
-    val tid: Int
+    val threadId: Int
     val title: String
     val lastReplyTime: Timestamp
     val postTime: Timestamp
-    val userByUid: SimpleUser
+    val user: SimpleUser
     val isQuestion: Boolean
     val hasBestAnswer: Boolean
 }

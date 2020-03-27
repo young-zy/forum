@@ -1,0 +1,594 @@
+openapi: 3.0.0
+info:
+  title: Forum
+  version: 0.0.1
+servers:
+  - url: https://virtserver.swaggerhub.com/young-zy/Forum/0.0.1
+    description: SwaggerHub API Auto Mocking
+  - url: https://home.young-zy.com:26132/api
+    description: Developing server
+tags:
+  - name: user
+    description: Operations about user
+paths:
+  /user:
+    post:
+      tags:
+        - user
+      summary: Creat user
+      parameters:
+        - in: header
+          name: token
+          description: token of user
+          example: "admin:sdkajhdjaskdada"
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: Created user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+        required: true
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour.
+              example: 100
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: The number of requests left for the time window.
+              example: 50
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+              description: The UTC date/time at which the current rate limit window resets.
+              example: "2020-07-21T17:32:28Z"
+        "401":
+          description: Registration unsuccessful
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour.
+              example: 100
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: The number of requests left for the time window.
+              example: 50
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+              description: The UTC date/time at which the current rate limit window resets.
+              example: "2020-07-21T17:32:28Z"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/State'
+              example:
+                Successful: false
+                Reason: "username already exsists"
+                Timestamp: "1580808834"
+    put:
+      summary: user info update
+      tags:
+        - user
+      parameters:
+        - in: header
+          name: token
+          description: token of user
+          example: "admin:sdkajhdjaskdada"
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInfoUpdate'
+        required: true
+      responses:
+        204:
+          description: successfully updated
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour.
+              example: 100
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: The number of requests left for the time window.
+              example: 50
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+              description: The UTC date/time at which the current rate limit window resets.
+              example: "2020-07-21T17:32:28Z"
+
+  /user/login:
+    post:
+      tags:
+        - user
+      summary: user login
+      requestBody:
+        description: user login
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/body'
+        required: true
+      responses:
+        "200":
+          description: success
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour.
+              example: 100
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: The number of requests left for the time window.
+              example: 50
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+              description: The UTC date/time at which the current rate limit window resets.
+              example: "2020-07-21T17:32:28Z"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/State'
+                  - type: object
+                    properties:
+                      token:
+                        type: string
+              example:
+                Successful: true
+                Reason: ""
+                Timestamp: "1580808834"
+                token: "admin:sdkajhdjaskdada"
+        "401":
+          description: password or username not correct
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour.
+              example: 100
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: The number of requests left for the time window.
+              example: 50
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+              description: The UTC date/time at which the current rate limit window resets.
+              example: "2020-07-21T17:32:28Z"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/State'
+              example:
+                Successful: false
+                Reason: "password or username not correct"
+                Timestamp: "1580808834"
+  /user/logout:
+    post:
+      summary: aquire user info
+      tags:
+        - user
+      parameters:
+        - in: header
+          name: token
+          description: token of user
+          example: "admin:sdkajhdjaskdada"
+          schema:
+            type: string
+          required: true
+      responses:
+        204:
+          description: "user token successfully deleted from server"
+        401:
+          description: "operation unsuccessful"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/State'
+              example:
+                Successful: false
+                Reason: "token not found"
+                timestamp: "1580808834"
+  /user/{userid}:
+    get:
+      summary: aquire user info
+      tags:
+        - user
+      parameters:
+        - in: path
+          name: userid
+          schema:
+            type: integer
+          required: true
+          example: 1
+        - in: header
+          name: token
+          description: token of user
+          example: "admin:sdkajhdjaskdada"
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: "user information successfully aquired"
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour.
+              example: 100
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: The number of requests left for the time window.
+              example: 50
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+              description: The UTC date/time at which the current rate limit window resets.
+              example: "2020-07-21T17:32:28Z"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/State'
+                  - $ref: '#/components/schemas/User'
+                example:
+                  Successful: true
+                  Reason: ""
+                  timestamp: "1580808834"
+        401:
+          description: ""
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour.
+              example: 100
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: The number of requests left for the time window.
+              example: 50
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+              description: The UTC date/time at which the current rate limit window resets.
+              example: "2020-07-21T17:32:28Z"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/State'
+              example:
+                Successful: false
+                Reason: "Permission denied"
+                timestamp: "1580808834"
+  /thread:
+    post:
+      summary: post new thread
+      tags:
+        - thread
+      parameters:
+        - in: header
+          name: token
+          description: token of user
+          example: "admin:sdkajhdjaskdada"
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/thread_post'
+      responses:
+        204:
+          description: "thread created successfully"
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour.
+              example: 100
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: The number of requests left for the time window.
+              example: 50
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+              description: The UTC date/time at which the current rate limit window resets.
+              example: "2020-07-21T17:32:28Z"
+        401:
+          description: "permission denied"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/State'
+              example:
+                Successful: false
+                Reason: "Permission denied"
+                timestamp: "2020-02-17T13:03:00.147178800Z"
+  /thread/{threadId}:
+    get:
+      summary: get thread title and replys
+      tags:
+        - thread
+      parameters:
+        - name: token
+          in: header
+          required: true
+          description: token of user
+          example: "admin:sdkajhdjaskdada"
+          schema:
+            type: string
+        - name: threadId
+          in: path
+          required: true
+          description: id of the thread
+          example: 1
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: thread retrieve successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadObject'
+
+        404:
+          description: thread not exist
+  /section/{sectionId}:
+    get:
+      summary: get list of threads of current section
+      tags:
+        - section
+      parameters:
+        - name: token
+          in: header
+          description: tokenof user
+          schema:
+            type: string
+          required: true
+          example: "admin:sdkajhdjaskdada"
+        - name: sectionId
+          in: path
+          description: id of the section
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 1
+        - name: page
+          in: query
+          description: query page of section, default value is 1
+          schema:
+            type: integer
+            format: int64
+          example: 1
+      responses:
+        200:
+          description: thread list of desired section retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SectionObject'
+
+        404:
+          description: desired section not found
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        email:
+          type: string
+        auth:
+          type: string
+      example:
+        id: 1
+        username: "admin"
+        email: "admin@forum.com"
+        auth: "admin"
+    SimpleUser:
+      type: object
+      properties:
+        uid:
+          type: integer
+          format: int64
+        username:
+          type: string
+      example:
+        id: 3
+        username: "admin"
+    UserRegister:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+      example:
+        username: "admin"
+        email: "admin@forum.com"
+        password: "Admin1$"
+    UserInfoUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        newPassword:
+          type: string
+      example:
+        username: "admin"
+        email: "admin@forum.com"
+        password: "Admin1$"
+        newPassword: "NewAdminPassword1$"
+    State:
+      type: object
+      properties:
+        Successful:
+          type: boolean
+        Reason:
+          type: string
+        Timestamp:
+          type: string
+    body:
+      type: object
+      properties:
+        username:
+          type: string
+          example: example
+        password:
+          type: string
+          example: example1$
+    thread_post:
+      type: object
+      properties:
+        sectionId:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: this is a title
+        content:
+          type: string
+          example: this is content, compatible with markdown syntax
+    ThreadObject:
+      type: object
+      properties:
+        threadId:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: this is first thread
+        user:
+          $ref: '#/components/schemas/SimpleUser'
+        lastReplyUid:
+          type: integer
+          format: int64
+          example: 1
+        postTime:
+          type: string
+          example: "2020-02-17T13:03:00.147178800Z"
+        isQuestion:
+          type: boolean
+          example: false
+        hasBestAnswer:
+          type: boolean
+          example: false
+        currentPage:
+          type: integer
+          format: int64
+          example: 1
+        totalPage:
+          type: integer
+          format: int64
+          example: 10
+        replies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReplyObject'
+
+    ReplyObject:
+      type: object
+      properties:
+        replyId:
+          type: integer
+          format: int64
+        replyContent:
+          type: string
+        replyTime:
+          type: string
+        lastEditTime:
+          type: string
+        priority:
+          type: number
+        isBestAnswer:
+          type: boolean
+        userByUserId:
+          $ref: '#/components/schemas/SimpleUser'
+    ThreadInList:
+      type: object
+      properties:
+        threadId:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: this is first thread
+        user:
+          $ref: '#/components/schemas/SimpleUser'
+        lastReplyUid:
+          type: integer
+          format: int64
+          example: 1
+        postTime:
+          type: string
+          example: "2020-02-17T13:03:00.147178800Z"
+        isQuestion:
+          type: boolean
+          example: false
+        hasBestAnswer:
+          type: boolean
+          example: false
+    SectionObject:
+      type: object
+      properties:
+        sectionId:
+          type: integer
+          format: int64
+        sectionName:
+          type: string
+        threads:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThreadInList'

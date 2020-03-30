@@ -36,27 +36,27 @@ class AuthService {
                 return      // blocked user can also operate un logged in operations
             }
             AuthLevel.USER -> {
-                if (tokenObj.auth.isBlocked) {
+                if (tokenObj.auth.blocked) {
                     throw AuthException("user ${tokenObj.uid} is blocked, please contact admin for more info")
                 }
             }
             AuthLevel.SECTION_ADMIN -> {
-                if (tokenObj.auth.isBlocked) {
+                if (tokenObj.auth.blocked) {
                     throw AuthException("user ${tokenObj.uid} is blocked, please contact admin for more info")
                 }
-                if (tokenObj.auth.isSystemAdmin) {
+                if (tokenObj.auth.systemAdmin) {
                     return
-                } else if (tokenObj.auth.isSectionAdmin && (config.sectionId in tokenObj.auth.sections)) {
+                } else if (tokenObj.auth.sectionAdmin && (config.sectionId in tokenObj.auth.sections)) {
                     return
                 } else {
                     throw AuthException("user ${tokenObj.uid} is not allowed to do the operation, minimum auth is section admin of ${config.sectionId}")
                 }
             }
             AuthLevel.SYSTEM_ADMIN -> {
-                if (tokenObj.auth.isBlocked) {
+                if (tokenObj.auth.blocked) {
                     throw AuthException("user ${tokenObj.uid} is blocked, please contact admin for more info")
                 }
-                if (!tokenObj.auth.isSystemAdmin) {
+                if (!tokenObj.auth.systemAdmin) {
                     throw AuthException("user ${tokenObj.uid} is not allowed to do the operation, minimum auth is system admin")
                 }
             }

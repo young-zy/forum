@@ -80,7 +80,7 @@ class UserService {
             regexService.validateUsername(username)
             regexService.validatePassword(password)
             regexService.validateEmail(email)
-            val userAuth = UserAuth(isUser = true)
+            val userAuth = UserAuth(user = true)
             val user = UserEntity()
             user.username = username
             user.hashedPassword = PasswordHash.createHash(password)
@@ -146,7 +146,7 @@ class UserService {
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
         userIds.forEach {
             val user = getUser(it)
-            user.auth.isSystemAdmin = false
+            user.auth.systemAdmin = false
             userRepository.save(user)
         }
     }
@@ -167,7 +167,7 @@ class UserService {
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
         userIds.forEach {
             val user = getUser(it)
-            user.auth.isSystemAdmin = false
+            user.auth.systemAdmin = false
             userRepository.save(user)
         }
     }
@@ -189,7 +189,7 @@ class UserService {
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
         userIds.forEach {
             val user = getUser(it)
-            user.auth.isSectionAdmin = true
+            user.auth.sectionAdmin = true
             sectionIds.forEach { sid ->
                 if (!sectionService.hasSection(sid)) {
                     throw NotFoundException("section $sid not found")
@@ -225,7 +225,7 @@ class UserService {
                 user.auth.sections.remove(sid)
             }
             if (user.auth.sections.isEmpty()) {
-                user.auth.isSectionAdmin = false
+                user.auth.sectionAdmin = false
             }
             userRepository.save(user)
         }

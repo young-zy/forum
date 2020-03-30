@@ -1,9 +1,8 @@
 package cf.youngauthentic.forum.controller
 
 import cf.youngauthentic.forum.config.stackTraceString
-import cf.youngauthentic.forum.controller.request.PostReplyRequest
 import cf.youngauthentic.forum.controller.request.PostThreadRequest
-import cf.youngauthentic.forum.controller.request.UpdateReplyRequest
+import cf.youngauthentic.forum.controller.request.ReplyRequest
 import cf.youngauthentic.forum.controller.response.Response
 import cf.youngauthentic.forum.controller.response.ThreadResponse
 import cf.youngauthentic.forum.service.RateLimitService
@@ -32,7 +31,7 @@ class ThreadController {
     @PostMapping("/thread/{threadId}/reply")
     fun postReply(@RequestHeader headers: Map<String, String>,
                   @PathVariable threadId: String,
-                  @RequestBody replyRequest: PostReplyRequest): ResponseEntity<Response> {
+                  @RequestBody replyRequest: ReplyRequest): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
@@ -157,7 +156,7 @@ class ThreadController {
     @PutMapping("/reply/{replyId}")
     fun updateReply(@PathVariable replyId: String,
                     @RequestHeader headers: Map<String, String>,
-                    @RequestBody requestBody: UpdateReplyRequest): ResponseEntity<Response> {
+                    @RequestBody requestBody: ReplyRequest): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()

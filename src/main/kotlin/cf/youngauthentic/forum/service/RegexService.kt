@@ -16,14 +16,14 @@ class RegexService {
     @Throws(IllegalArgumentException::class)
     fun validateUsername(username: String) {
         if (!usernameRegex.matches(username)) {
-            throw IllegalArgumentException("username pattern not correct!")
+            throw IllegalArgumentException("username pattern not correct! username should be 4-20 characters long and only a-z, A-Z, '-' and '_' can be used")
         }
     }
 
     @Throws(IllegalArgumentException::class)
     fun validatePassword(password: String) {
         if (!passwordRegex.matches(password)) {
-            throw IllegalArgumentException("password pattern not correct!")
+            throw IllegalArgumentException("password pattern not correct! password should be at least 8 characters long, with both characters and numbers, and should have at least one capitalized and un capitalized character each")
         }
     }
 

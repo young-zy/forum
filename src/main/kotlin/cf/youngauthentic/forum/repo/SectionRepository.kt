@@ -6,5 +6,7 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource
 
 @RepositoryRestResource(exported = false)
 interface SectionRepository : JpaRepository<SectionEntity, Int> {
-    fun findSectionEntityBySid(sid: Int): SectionEntity
+    fun findSectionEntityBySid(sid: Int): SectionEntity?
+
+    fun existsBySectionName(sectionName: String): Boolean
 }

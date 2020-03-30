@@ -1,9 +1,7 @@
 package cf.youngauthentic.forum.controller
 
 import cf.youngauthentic.forum.config.stackTraceString
-import cf.youngauthentic.forum.controller.request.LoginRequest
-import cf.youngauthentic.forum.controller.request.RegisterRequest
-import cf.youngauthentic.forum.controller.request.UserUpdateRequest
+import cf.youngauthentic.forum.controller.request.*
 import cf.youngauthentic.forum.controller.response.LoginResponse
 import cf.youngauthentic.forum.controller.response.Response
 import cf.youngauthentic.forum.controller.response.UserResponse
@@ -176,6 +174,64 @@ class UserController {
             loginService.logout(headers["token"] ?: error("token not found in header"))
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message)
+        } catch (e: Exception) {
+            logger.error(e.stackTraceString)
+            status = HttpStatus.INTERNAL_SERVER_ERROR
+            responseBody = Response(false, e.message ?: "")
+        } finally {
+            return ResponseEntity
+                    .status(status)
+                    .headers(responseHeaders)
+                    .body(responseBody)
+        }
+    }
+
+    @PutMapping("/user/giveSystemAdmin")
+    fun giveSystemAdmin(
+            @RequestHeader headers: Map<String, String>,
+            @RequestBody requestBody: GiveSystemAdminRequest
+    ): ResponseEntity<Response> {
+        var status = HttpStatus.OK
+        val responseHeaders = HttpHeaders()
+        var responseBody: Response? = null
+        try {
+            rateLimitService.buildHeader(headers, responseHeaders)
+            userService.giveSystemAdmin(headers["token"] ?: "", requestBody.userIds)
+        } catch (e: RateLimitExceededException) {
+            status = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message)
+        } catch (e: AuthException) {
+            status = HttpStatus.UNAUTHORIZED
+            responseBody = Response(false, e.message)
+        } catch (e: Exception) {
+            logger.error(e.stackTraceString)
+            status = HttpStatus.INTERNAL_SERVER_ERROR
+            responseBody = Response(false, e.message ?: "")
+        } finally {
+            return ResponseEntity
+                    .status(status)
+                    .headers(responseHeaders)
+                    .body(responseBody)
+        }
+    }
+
+    @PutMapping("/user/giveSectionAdmin")
+    fun giveSectionAdmin(
+            @RequestHeader headers: Map<String, String>,
+            @RequestBody requestBody: GiveSectionAdminRequest
+    ): ResponseEntity<Response> {
+        var status = HttpStatus.OK
+        val responseHeaders = HttpHeaders()
+        var responseBody: Response? = null
+        try {
+            rateLimitService.buildHeader(headers, responseHeaders)
+            userService.giveSectionAdmin(headers["token"] ?: "", requestBody.userIds, requestBody.sectionIds)
+        } catch (e: RateLimitExceededException) {
+            status = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message)
+        } catch (e: AuthException) {
+            status = HttpStatus.UNAUTHORIZED
             responseBody = Response(false, e.message)
         } catch (e: Exception) {
             logger.error(e.stackTraceString)

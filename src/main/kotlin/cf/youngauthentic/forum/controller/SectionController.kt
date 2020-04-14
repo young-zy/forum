@@ -33,14 +33,19 @@ class SectionController {
     @GetMapping("/section/{sectionId}")
     fun getSection(@PathVariable sectionId: Int,
                    @RequestHeader headers: Map<String, String>,
-                   @RequestParam page: Int,
-                   @RequestParam size: Int): ResponseEntity<Response> {
+                   @RequestParam page: Int?,
+                   @RequestParam size: Int?): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
         try {
             rateLimitService.buildHeader(headers, responseHeaders)
-            responseBody = SectionResponse(sectionService.getSection(headers["token"] ?: "", sectionId, page, size))
+            responseBody = SectionResponse(
+                    sectionService.getSection(
+                            headers["token"] ?: "",
+                            sectionId, page ?: 1, size ?: 10
+                    )
+            )
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message)

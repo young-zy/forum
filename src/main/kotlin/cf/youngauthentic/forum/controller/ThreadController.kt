@@ -30,14 +30,14 @@ class ThreadController {
 
     @PostMapping("/thread/{threadId}/reply")
     fun postReply(@RequestHeader headers: Map<String, String>,
-                  @PathVariable threadId: String,
+                  @PathVariable threadId: Int,
                   @RequestBody replyRequest: ReplyRequest): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
         try {
             rateLimitService.buildHeader(headers, responseHeaders)
-            threadService.postReply(headers["token"] ?: "", threadId.toInt(), replyRequest.replyContent)
+            threadService.postReply(headers["token"] ?: "", threadId, replyRequest.replyContent)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message)
@@ -95,15 +95,16 @@ class ThreadController {
     @GetMapping("/thread/{threadId}")
     fun getThread(
             @RequestHeader headers: Map<String, String>,
-            @PathVariable("threadId") threadId: String,
-            @RequestParam("page", defaultValue = "1") page: String
+            @PathVariable("threadId") threadId: Int,
+            @RequestParam("page") page: Int?,
+            @RequestParam("size") size: Int?
     ): ResponseEntity<*> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
         try {
             rateLimitService.buildHeader(headers, responseHeaders)
-            val thread = threadService.getThread(headers["token"] ?: "", threadId.toInt(), page.toInt())
+            val thread = threadService.getThread(headers["token"] ?: "", threadId, page ?: 1, size ?: 10)
             responseBody = ThreadResponse(thread)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
@@ -154,7 +155,7 @@ class ThreadController {
     }
 
     @PutMapping("/reply/{replyId}")
-    fun updateReply(@PathVariable replyId: String,
+    fun updateReply(@PathVariable replyId: Int,
                     @RequestHeader headers: Map<String, String>,
                     @RequestBody requestBody: ReplyRequest): ResponseEntity<Response> {
         var responseBody: Response? = null
@@ -162,7 +163,7 @@ class ThreadController {
         val responseHeaders = HttpHeaders()
         try {
             rateLimitService.buildHeader(headers, responseHeaders)
-            threadService.updateReply(headers["token"] ?: "", replyId.toInt(), requestBody.replyContent)
+            threadService.updateReply(headers["token"] ?: "", replyId, requestBody.replyContent)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message)
@@ -184,13 +185,13 @@ class ThreadController {
     }
 
     @DeleteMapping("/reply/{replyId}")
-    fun deleteReply(@PathVariable replyId: String, @RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
+    fun deleteReply(@PathVariable replyId: Int, @RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
         try {
             rateLimitService.buildHeader(headers, responseHeaders)
-            threadService.deleteReply(headers["token"] ?: "", replyId.toInt())
+            threadService.deleteReply(headers["token"] ?: "", replyId)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message)
@@ -212,13 +213,13 @@ class ThreadController {
     }
 
     @DeleteMapping("/thread/{threadId}")
-    fun deleteThread(@PathVariable threadId: String, @RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
+    fun deleteThread(@PathVariable threadId: Int, @RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
         try {
             rateLimitService.buildHeader(headers, responseHeaders)
-            threadService.deleteThread(headers["token"] ?: "", threadId.toInt())
+            threadService.deleteThread(headers["token"] ?: "", threadId)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message)

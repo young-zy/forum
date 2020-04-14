@@ -36,16 +36,17 @@ class UserController {
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 
     @GetMapping("/user/{userId}")
-    fun getUser(@PathVariable userId: String,
+    fun getUser(@PathVariable userId: Int,
                 @RequestHeader headers: Map<String, String>): ResponseEntity<*> {
         val responseHeaders = HttpHeaders()
         var responseStatus = HttpStatus.OK
         var responseBody: Response? = null
         try {
             rateLimitService.buildHeader(headers, responseHeaders)
-            responseBody = UserResponse(userService.getDetailedUser(headers["token"] ?: "", userId.toInt()))
+            responseBody = UserResponse(userService.getDetailedUser(headers["token"] ?: "", userId))
         } catch (e: AuthException) {
             responseStatus = HttpStatus.UNAUTHORIZED
+            responseBody = Response(false, e.message)
         } catch (e: RateLimitExceededException) {
             responseStatus = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message)
@@ -166,7 +167,7 @@ class UserController {
     fun logout(
             @RequestHeader headers: Map<String, String>
     ): ResponseEntity<*> {
-        var status = HttpStatus.OK
+        var status = HttpStatus.NO_CONTENT
         val responseHeaders = HttpHeaders()
         var responseBody: Response? = null
         try {

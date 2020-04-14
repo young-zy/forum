@@ -198,10 +198,42 @@ class ThreadService {
     fun vote(token: String, rid: Int, state: Int) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
-        if (!(replyRepo.findByRid(rid)?.threadByTid?.question ?: throw NotFoundException("reply $rid not found"))) {
-            throw NotAcceptableException("reply $rid is not in a thread that s a question")
+        val reply = replyRepo.findByRid(rid)
+        if (!(reply?.threadByTid?.question ?: throw NotFoundException("reply $rid not found"))) {
+            throw NotAcceptableException("reply $rid is not in a thread that is a question")
         }
-        val voteEntity = VoteEntity(tokenObj!!.uid, rid, state)
+        var voteEntity = voteRepo.findVoteEntityByUidAndRid(tokenObj!!.uid, rid)
+        if (voteEntity !== null) {
+            if (voteEntity.vote > 0 && state < 0) {
+                reply.upVote--
+                reply.downVote++
+            } else if (voteEntity.vote < 0 && state > 0) {
+                reply.upVote++
+                reply.downVote--
+            } else if (voteEntity.vote == state) {      //same
+
+            } else {
+                if (state > 0) {
+                    reply.upVote++
+                } else if (state == 0) {
+                    if (voteEntity.vote > 0) {
+                        reply.upVote--
+                    } else {
+                        reply.downVote--
+                    }
+                } else {
+                    reply.downVote++
+                }
+            }
+        } else {
+            voteEntity = VoteEntity(tokenObj.uid, rid, state)
+            if (state > 0) {
+                reply.upVote++
+            } else if (state < 0) {
+                reply.downVote++
+            }
+        }
+        replyRepo.save(reply)
         voteRepo.save(voteEntity)
     }
 }

@@ -121,7 +121,7 @@ class UserService {
             regexService.validateEmail(newEmail)
         }
         userEntity.email = newEmail ?: userEntity.email
-        if (existsUsername(newUsername ?: "")) {
+        if (newUsername != userEntity.username && existsUsername(newUsername ?: "")) {
             throw NotAcceptableException("Username $newUsername already exists")
         }
         userEntity.username = newUsername ?: userEntity.username

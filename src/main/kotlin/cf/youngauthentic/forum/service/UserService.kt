@@ -57,10 +57,11 @@ class UserService {
         return userRepository.existsByUsername(username)
     }
 
-    fun getDetailedUser(token: String, uid: Int): DetailedUser {
+    fun getDetailedUser(token: String, uid: Int?): DetailedUser {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER, allowAuthor = true))
-        return userRepository.findDetailedUserEntityByUid(uid) ?: throw NotFoundException("uid $uid not found")
+        return userRepository.findDetailedUserEntityByUid(uid ?: tokenObj!!.uid)
+                ?: throw NotFoundException("uid $uid not found")
     }
 
     /**

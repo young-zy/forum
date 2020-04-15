@@ -35,8 +35,8 @@ class UserController {
 
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 
-    @GetMapping("/user/{userId}")
-    fun getUser(@PathVariable userId: Int,
+    @GetMapping(path = ["/user/{userId}", "/user"])
+    fun getUser(@PathVariable userId: Int?,
                 @RequestHeader headers: Map<String, String>): ResponseEntity<*> {
         val responseHeaders = HttpHeaders()
         var responseStatus = HttpStatus.OK

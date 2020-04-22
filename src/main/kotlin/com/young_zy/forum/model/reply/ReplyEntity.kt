@@ -29,9 +29,15 @@ data class ReplyEntity(
         @Column(name = "priority", nullable = false, precision = 5, scale = 5)
         @Basic
         var priority: Double = 0.0,
-        @Column(name = "is_bestAnswer", nullable = false)
+        @Column(name = "isBestAnswer", nullable = false)
         @Basic
         var bestAnswer: Boolean = false,
+        @Column(name = "upVote", nullable = false)
+        @Basic
+        var upVote: Int = 0,
+        @Column(name = "downVote", nullable = false)
+        @Basic
+        var downVote: Int = 0,
         @JoinColumn(name = "tid", referencedColumnName = "tid", nullable = false, insertable = false, updatable = false)
         @ManyToOne
         var threadByTid: ThreadEntity? = null,

@@ -33,11 +33,11 @@ data class ThreadEntity(
         @Column(name = "postTime", nullable = false)
         var postTime: Timestamp = Timestamp(System.currentTimeMillis()),
         @Basic
-        @Column(name = "isQuestion", nullable = false)
+        @Column(name = "question", nullable = false)
         var question: Boolean,
         @ManyToOne
         @JoinColumn(name = "uid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
-        var userByUid: UserEntity? = null,
+        var author: UserEntity? = null,
         @ManyToOne
         @JoinColumn(name = "lastReplyUid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
         var userByLastReplyUid: UserEntity? = null

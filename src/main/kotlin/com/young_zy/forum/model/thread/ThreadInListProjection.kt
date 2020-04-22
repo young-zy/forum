@@ -10,7 +10,7 @@ interface ThreadInListProjection {
     var title: String
     var lastReplyTime: Timestamp
     var postTime: Timestamp
-    var user: SimpleUser
+    var author: SimpleUser
     var question: Boolean
     var hasBestAnswer: Boolean
 }

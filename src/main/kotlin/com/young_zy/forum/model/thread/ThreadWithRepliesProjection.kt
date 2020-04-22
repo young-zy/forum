@@ -10,7 +10,7 @@ interface ThreadWithRepliesProjection {
     var title: String
     var lastReplyTime: Timestamp
     var postTime: Timestamp
-    var user: SimpleUser
-    val isQuestion: Boolean
+    var author: SimpleUser
+    val question: Boolean
     val hasBestAnswer: Boolean
 }

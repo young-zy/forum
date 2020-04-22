@@ -135,8 +135,8 @@ class ThreadService {
                 allowAuthor = true,
                 allowOnlyAuthor = false,
                 sectionId = thread.sid))
-        threadRepo.delete(thread)
         replyRepo.deleteAllByTid(threadId)
+        threadRepo.delete(thread)
     }
 
 
@@ -236,5 +236,9 @@ class ThreadService {
         }
         replyRepo.save(reply)
         voteRepo.save(voteEntity)
+    }
+
+    fun search(token: String, keyWord: String, page: Int, size: Int): SearchObject {
+        return SearchObject(threadRepo.searchInTitle(keyWord, PageRequest.of(page - 1, size)), page, 0)
     }
 }

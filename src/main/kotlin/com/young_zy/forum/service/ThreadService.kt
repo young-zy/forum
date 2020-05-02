@@ -134,7 +134,8 @@ class ThreadService {
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SECTION_ADMIN,
                 allowAuthor = true,
                 allowOnlyAuthor = false,
-                sectionId = thread.sid))
+                sectionId = thread.sid,
+                authorUid = thread.uid))
         replyRepo.deleteAllByTid(threadId)
         threadRepo.delete(thread)
     }

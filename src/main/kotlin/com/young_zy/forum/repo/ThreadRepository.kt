@@ -19,8 +19,11 @@ interface ThreadRepository : JpaRepository<ThreadEntity, Int> {
 
     fun countBySid(sid: Int): Int
 
-    @Query(value = "select * from (select * from  thread  where  match  (title)  against  (?1 IN NATURAL LANGUAGE MODE) ORDER BY lastReplyTime) as t natural join user",
+
+    @Query(value = "select tid,title,lastReplyTime,postTime,uid,username,question,hasBestAnswer from (select * from  thread  where  match  (title)  against  (?1 IN NATURAL LANGUAGE MODE) ORDER BY lastReplyTime) as t natural join user /*#pageable*/",
             nativeQuery = true,
-            countQuery = "SELECT count(*) from  thread  where  match  (title)  against  (?1 IN NATURAL LANGUAGE MODE)")
-    fun searchInTitle(keyWord: String, pageable: Pageable): List<Any>
+            countQuery = "SELECT count(*) from  thread  where  match  (title)  against  (?1 IN NATURAL LANGUAGE MODE)",
+            name = "searchResultDTO")
+    fun searchInTitle(keyWord: String, pageable: Pageable): List<Array<Any>>
+
 }

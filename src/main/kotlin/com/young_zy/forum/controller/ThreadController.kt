@@ -3,9 +3,10 @@ package com.young_zy.forum.controller
 import com.young_zy.forum.config.stackTraceString
 import com.young_zy.forum.controller.request.PostThreadRequest
 import com.young_zy.forum.controller.request.ReplyRequest
+import com.young_zy.forum.controller.response.ReplyResponse
 import com.young_zy.forum.controller.response.Response
+import com.young_zy.forum.controller.response.SearchResponse
 import com.young_zy.forum.controller.response.ThreadResponse
-import com.young_zy.forum.model.SearchObject
 import com.young_zy.forum.service.RateLimitService
 import com.young_zy.forum.service.ThreadService
 import com.young_zy.forum.service.exception.AuthException
@@ -241,4 +242,61 @@ class ThreadController {
         }
     }
 
+    @GetMapping("/reply/{replyId}")
+    fun getReply(@PathVariable replyId: Int, @RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
+        var responseBody: Response? = null
+        var status = HttpStatus.OK
+        val responseHeaders = HttpHeaders()
+        try {
+            rateLimitService.buildHeader(headers, responseHeaders)
+            responseBody = ReplyResponse(threadService.getReply(headers["token"] ?: "", replyId))
+        } catch (e: RateLimitExceededException) {
+            status = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message)
+        } catch (e: NotFoundException) {
+            status = HttpStatus.NOT_FOUND
+            responseBody = Response(false, e.message)
+        } catch (e: AuthException) {
+            status = HttpStatus.UNAUTHORIZED
+            responseBody = Response(false, e.message)
+        } catch (e: Exception) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR
+            logger.error(e.stackTraceString)
+            responseBody = Response(false, e.message ?: "")
+        } finally {
+            return ResponseEntity
+                    .status(status)
+                    .headers(responseHeaders)
+                    .body(responseBody)
+        }
+    }
+
+    @GetMapping("/search")
+    fun search(@RequestParam keyWord: String, @RequestHeader headers: Map<String, String>,
+               @RequestParam size: Int?, @RequestParam page: Int?): ResponseEntity<Response> {
+        var responseBody: Response? = null
+        var status = HttpStatus.OK
+        val responseHeaders = HttpHeaders()
+        try {
+            rateLimitService.buildHeader(headers, responseHeaders)
+            responseBody = SearchResponse(threadService.search(headers["token"] ?: "", keyWord, page ?: 1, size ?: 10))
+        } catch (e: RateLimitExceededException) {
+            status = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message)
+        } catch (e: NotFoundException) {
+            status = HttpStatus.NOT_FOUND
+            responseBody = Response(false, e.message)
+        } catch (e: AuthException) {
+            status = HttpStatus.UNAUTHORIZED
+        } catch (e: Exception) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR
+            logger.error(e.stackTraceString)
+            responseBody = Response(false, e.message ?: "")
+        } finally {
+            return ResponseEntity
+                    .status(status)
+                    .headers(responseHeaders)
+                    .body(responseBody)
+        }
+    }
 }

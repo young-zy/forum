@@ -1,8 +1,8 @@
 package com.young_zy.forum.service
 
-import com.young_zy.forum.model.SearchObject
 import com.young_zy.forum.model.reply.ReplyEntity
 import com.young_zy.forum.model.reply.ReplyObject
+import com.young_zy.forum.model.thread.SearchResultDTO
 import com.young_zy.forum.model.thread.ThreadEntity
 import com.young_zy.forum.model.thread.ThreadObject
 import com.young_zy.forum.model.vote.VoteEntity
@@ -239,7 +239,21 @@ class ThreadService {
         voteRepo.save(voteEntity)
     }
 
-    fun search(token: String, keyWord: String, page: Int, size: Int): SearchObject {
-        return SearchObject(threadRepo.searchInTitle(keyWord, PageRequest.of(page - 1, size)), page, 0)
+    @Throws(NotFoundException::class, AuthException::class)
+    fun getReply(token: String, replyId: Int): ReplyObject {
+        val tokenObj = loginService.getToken(token)
+        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
+        val reply = replyRepo.findByRid(replyId) ?: throw NotFoundException("reply of rid $replyId not found")
+        return ReplyObject(reply)
+    }
+
+    @Throws(AuthException::class)
+    fun search(token: String, keyWord: String, page: Int, size: Int): List<SearchResultDTO> {
+        val res = threadRepo.searchInTitle(keyWord, PageRequest.of(page - 1, size))
+        val ret = mutableListOf<SearchResultDTO>()
+        res.forEach {
+            ret.add(SearchResultDTO(it))
+        }
+        return ret
     }
 }

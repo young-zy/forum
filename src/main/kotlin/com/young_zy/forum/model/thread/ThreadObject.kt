@@ -7,12 +7,10 @@ class ThreadObject(thread: ThreadProjection,
                    var replies: List<ReplyObject>,
                    var currentPage: Int,
                    var totalPage: Int) {
-    init {
-        val threadId: Int = thread.tid
-        val title: String = thread.title
-        val lastReplyTime: Timestamp = thread.lastReplyTime
-        val postTime: Timestamp = thread.postTime
-        val isQuestion: Boolean = thread.question
-        val hasBestAnswer: Boolean = thread.hasBestAnswer
-    }
+    val threadId: Int = thread.tid
+    val title: String = thread.title
+    val lastReplyTime: Timestamp = thread.lastReplyTime
+    val postTime: Timestamp = thread.postTime
+    val isQuestion: Boolean = thread.question
+    val hasBestAnswer: Boolean = thread.hasBestAnswer
 }

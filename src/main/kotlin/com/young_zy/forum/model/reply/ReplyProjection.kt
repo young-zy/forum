@@ -12,5 +12,5 @@ interface ReplyProjection {
     val lastEditTime: Timestamp
     val priority: Double
     val bestAnswer: Boolean
-    val userByUid: SimpleUser
+    val userByUid: SimpleUser?
 }

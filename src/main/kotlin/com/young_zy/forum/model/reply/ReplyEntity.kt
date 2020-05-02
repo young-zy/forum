@@ -11,27 +11,27 @@ data class ReplyEntity(
         @Column(name = "rid", nullable = false, precision = 0)
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
-        var rid: Int = 0,
+        override var rid: Int = 0,
         @Column(name = "tid", nullable = false)
         var tid: Int = 0,
         @Column(name = "replyContent", nullable = true)
         @Basic
-        var replyContent: String? = null,
+        override var replyContent: String = "",
         @Column(name = "uid", nullable = true)
         @Basic
         var uid: Int,
         @Column(name = "replyTime", nullable = false)
         @Basic
-        var replyTime: Timestamp = Timestamp(System.currentTimeMillis()),
+        override var replyTime: Timestamp = Timestamp(System.currentTimeMillis()),
         @Column(name = "lastEditTime", nullable = false)
         @Basic
-        var lastEditTime: Timestamp = Timestamp(System.currentTimeMillis()),
+        override var lastEditTime: Timestamp = Timestamp(System.currentTimeMillis()),
         @Column(name = "priority", nullable = false, precision = 5, scale = 5)
         @Basic
-        var priority: Double = 0.0,
+        override var priority: Double = 0.0,
         @Column(name = "isBestAnswer", nullable = false)
         @Basic
-        var bestAnswer: Boolean = false,
+        override var bestAnswer: Boolean = false,
         @Column(name = "upVote", nullable = false)
         @Basic
         var upVote: Int = 0,
@@ -43,5 +43,5 @@ data class ReplyEntity(
         var threadByTid: ThreadEntity? = null,
         @JoinColumn(name = "uid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
         @ManyToOne
-        var userByUid: UserEntity? = null
-)
+        override var userByUid: UserEntity? = null
+) : ReplyProjection

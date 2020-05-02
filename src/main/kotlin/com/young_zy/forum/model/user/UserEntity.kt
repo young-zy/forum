@@ -10,10 +10,10 @@ data class UserEntity(
         @Column(name = "uid", nullable = false)
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
-        var uid: Int = 0,
+        override var uid: Int = 0,
         @Column(name = "username", nullable = false, length = 45)
         @Basic
-        var username: String = "",
+        override var username: String = "",
         @Column(name = "email", nullable = false, length = 45)
         @Basic
         var email: String = "",
@@ -29,7 +29,7 @@ data class UserEntity(
         @Column(name = "tag_priority", nullable = false)
         @Basic
         var tagPriority: String = "0"
-)
+) : SimpleUser
 
 @Converter
 class UserAuthConverter : AttributeConverter<UserAuth, String> {

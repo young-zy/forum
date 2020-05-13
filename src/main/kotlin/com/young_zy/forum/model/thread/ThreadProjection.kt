@@ -1,6 +1,7 @@
 package com.young_zy.forum.model.thread
 
 
+import com.young_zy.forum.model.user.SimpleUser
 import org.springframework.data.rest.core.config.Projection
 import java.sql.Timestamp
 
@@ -12,4 +13,5 @@ interface ThreadProjection {
     var postTime: Timestamp
     var question: Boolean
     var hasBestAnswer: Boolean
+    var author: SimpleUser
 }

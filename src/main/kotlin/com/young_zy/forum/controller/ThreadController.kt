@@ -3,10 +3,8 @@ package com.young_zy.forum.controller
 import com.young_zy.forum.config.stackTraceString
 import com.young_zy.forum.controller.request.PostThreadRequest
 import com.young_zy.forum.controller.request.ReplyRequest
-import com.young_zy.forum.controller.response.ReplyResponse
-import com.young_zy.forum.controller.response.Response
-import com.young_zy.forum.controller.response.SearchResponse
-import com.young_zy.forum.controller.response.ThreadResponse
+import com.young_zy.forum.controller.response.*
+import com.young_zy.forum.service.HitRateService
 import com.young_zy.forum.service.RateLimitService
 import com.young_zy.forum.service.ThreadService
 import com.young_zy.forum.service.exception.AuthException
@@ -27,6 +25,9 @@ class ThreadController {
 
     @Autowired
     lateinit var threadService: ThreadService
+
+    @Autowired
+    lateinit var hitRateService: HitRateService
 
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 
@@ -280,6 +281,34 @@ class ThreadController {
         try {
             rateLimitService.buildHeader(headers, responseHeaders)
             responseBody = SearchResponse(threadService.search(headers["token"] ?: "", keyWord, page ?: 1, size ?: 10))
+        } catch (e: RateLimitExceededException) {
+            status = HttpStatus.TOO_MANY_REQUESTS
+            responseBody = Response(false, e.message)
+        } catch (e: NotFoundException) {
+            status = HttpStatus.NOT_FOUND
+            responseBody = Response(false, e.message)
+        } catch (e: AuthException) {
+            status = HttpStatus.UNAUTHORIZED
+        } catch (e: Exception) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR
+            logger.error(e.stackTraceString)
+            responseBody = Response(false, e.message ?: "")
+        } finally {
+            return ResponseEntity
+                    .status(status)
+                    .headers(responseHeaders)
+                    .body(responseBody)
+        }
+    }
+
+    @GetMapping("/thread/hot")
+    fun getHotThreads(@RequestHeader headers: Map<String, String>, @RequestParam count: Int?): ResponseEntity<Response> {
+        var responseBody: Response? = null
+        var status = HttpStatus.OK
+        val responseHeaders = HttpHeaders()
+        try {
+            rateLimitService.buildHeader(headers, responseHeaders)
+            responseBody = HitRateResponse(hitRateService.getOrder(count ?: 20))
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message)

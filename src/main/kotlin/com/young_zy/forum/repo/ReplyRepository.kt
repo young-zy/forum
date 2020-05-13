@@ -13,6 +13,8 @@ interface ReplyRepository : JpaRepository<ReplyEntity, Int> {
 
     fun findByRid(rid: Int): ReplyEntity?
 
+    fun findProjectionByRid(rid: Int): ReplyProjection?
+
     fun deleteAllByTid(tid: Int)
 
     fun countByTid(tid: Int): Int

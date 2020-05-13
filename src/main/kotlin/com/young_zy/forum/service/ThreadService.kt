@@ -37,6 +37,9 @@ class ThreadService {
     @Autowired
     private lateinit var authService: AuthService
 
+    @Autowired
+    private lateinit var hitRateService: HitRateService
+
     /**
      * get the thread of the given threadId
      *
@@ -68,6 +71,9 @@ class ThreadService {
                 }
             }
             replies.add(replyObject)
+        }
+        if (tokenObj != null) {
+            hitRateService.increment(tokenObj.uid, threadId)
         }
         return ThreadObject(
                 threadProjection,
@@ -243,7 +249,7 @@ class ThreadService {
     fun getReply(token: String, replyId: Int): ReplyObject {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
-        val reply = replyRepo.findByRid(replyId) ?: throw NotFoundException("reply of rid $replyId not found")
+        val reply = replyRepo.findProjectionByRid(replyId) ?: throw NotFoundException("reply of rid $replyId not found")
         return ReplyObject(reply)
     }
 

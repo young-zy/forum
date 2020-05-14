@@ -19,3 +19,9 @@ rate.redis.host=127.0.0.1
 rate.redis.port=6379
 rate.redis.password=  #your password here
 rate.redis.db-index=1
+
+# hit rate redis config
+hit-rate.redis.host=127.0.0.1
+hit-rate.redis.port=6379
+hit-rate.redis.password= #your password here
+hit-rate.redis.db-index=2

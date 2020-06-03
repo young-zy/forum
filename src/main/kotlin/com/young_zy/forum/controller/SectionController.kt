@@ -31,10 +31,10 @@ class SectionController {
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 
     @GetMapping("/section/{sectionId}")
-    fun getSection(@PathVariable sectionId: Int,
-                   @RequestHeader headers: Map<String, String>,
-                   @RequestParam page: Int?,
-                   @RequestParam size: Int?): ResponseEntity<Response> {
+    suspend fun getSection(@PathVariable sectionId: Int,
+                           @RequestHeader headers: Map<String, String>,
+                           @RequestParam page: Int?,
+                           @RequestParam size: Int?): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
@@ -68,7 +68,7 @@ class SectionController {
     }
 
     @GetMapping("/section")
-    fun getSections(@RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
+    suspend fun getSections(@RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
@@ -97,7 +97,7 @@ class SectionController {
     }
 
     @PostMapping("/section")
-    fun addSection(@RequestHeader headers: Map<String, String>, @RequestBody requestBody: AddSectionRequest): ResponseEntity<Response> {
+    suspend fun addSection(@RequestHeader headers: Map<String, String>, @RequestBody requestBody: AddSectionRequest): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
@@ -126,7 +126,7 @@ class SectionController {
     }
 
     @DeleteMapping("/section/{sectionId}")
-    fun deleteSection(@RequestHeader headers: Map<String, String>, @PathVariable sectionId: Int): ResponseEntity<Response> {
+    suspend fun deleteSection(@RequestHeader headers: Map<String, String>, @PathVariable sectionId: Int): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()

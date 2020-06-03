@@ -23,7 +23,7 @@ class LoginService {
     /**
      * @author young-zy
      * @param token token string
-     * @return uid of the token if exists, else returns -1
+     * @return Token of the token if exists, else returns null
      */
     fun getToken(token: String?): Token? {
         return (tokenRedisTemplate.opsForValue().get(token ?: ""))
@@ -34,7 +34,7 @@ class LoginService {
      * @param token token string
      * @return uid of the token if exists, else returns -1
      */
-    fun getUid(token: String): Int {
+    fun getUid(token: String): Long {
         return (tokenRedisTemplate.opsForValue().get(token) ?: return -1).uid
     }
 
@@ -72,7 +72,7 @@ class LoginService {
      * @throws NotAcceptableException when username doesn't exist or password incorrect
      */
     @Throws(NotAcceptableException::class)
-    fun login(username: String, password: String): String {
+    suspend fun login(username: String, password: String): String {
         val user: UserEntity = userService.getUser(username)
                 ?: throw NotAcceptableException("username $username does not exist")
         return if (PasswordHash.validatePassword(password, user.hashedPassword)) {
@@ -83,7 +83,7 @@ class LoginService {
             val tokenStr = longToken.toString(16)
             val token = Token(
                     "$username:$tokenStr",
-                    user.uid,
+                    user.uid!!,
                     user.username,
                     user.auth)
             tokenRedisTemplate.opsForValue().set(token.token, token, 1, TimeUnit.DAYS)
@@ -102,4 +102,7 @@ class LoginService {
         tokenRedisTemplate.delete(token)
     }
 
+    fun getAllTokens(username: String) {
+        tokenRedisTemplate.keys("$username*")
+    }
 }

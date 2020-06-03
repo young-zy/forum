@@ -36,8 +36,8 @@ class UserController {
     val logger: Logger = LoggerFactory.getLogger(this.javaClass)
 
     @GetMapping(path = ["/user/{userId}", "/user"])
-    fun getUser(@PathVariable userId: Int?,
-                @RequestHeader headers: Map<String, String>): ResponseEntity<*> {
+    suspend fun getUser(@PathVariable userId: Long?,
+                        @RequestHeader headers: Map<String, String>): ResponseEntity<*> {
         val responseHeaders = HttpHeaders()
         var responseStatus = HttpStatus.OK
         var responseBody: Response? = null
@@ -66,7 +66,7 @@ class UserController {
     }
 
     @PutMapping("/user")
-    fun userUpdate(
+    suspend fun userUpdate(
             @RequestHeader headers: Map<String, String>,
             @RequestBody body: UserUpdateRequest
     ): ResponseEntity<*> {
@@ -103,7 +103,7 @@ class UserController {
     }
 
     @PostMapping("/user/login")
-    fun login(
+    suspend fun login(
             @RequestHeader headers: Map<String, String>,
             @RequestBody requestBody: LoginRequest
     ): ResponseEntity<*> {
@@ -133,7 +133,7 @@ class UserController {
     }
 
     @PostMapping("/user")
-    fun register(
+    suspend fun register(
             @RequestHeader headers: Map<String, String>,
             @RequestBody request: RegisterRequest): ResponseEntity<*> {
         var status = HttpStatus.OK
@@ -189,7 +189,7 @@ class UserController {
     }
 
     @PutMapping("/user/giveSystemAdmin")
-    fun giveSystemAdmin(
+    suspend fun giveSystemAdmin(
             @RequestHeader headers: Map<String, String>,
             @RequestBody requestBody: GiveSystemAdminRequest
     ): ResponseEntity<Response> {
@@ -218,7 +218,7 @@ class UserController {
     }
 
     @PutMapping("/user/giveSectionAdmin")
-    fun giveSectionAdmin(
+    suspend fun giveSectionAdmin(
             @RequestHeader headers: Map<String, String>,
             @RequestBody requestBody: GiveSectionAdminRequest
     ): ResponseEntity<Response> {

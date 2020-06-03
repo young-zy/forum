@@ -1,21 +1,20 @@
-package com.young_zy.forum.repo
-
-import com.young_zy.forum.model.reply.ReplyEntity
-import com.young_zy.forum.model.reply.ReplyProjection
-import org.springframework.data.domain.Pageable
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.rest.core.annotation.RepositoryRestResource
-
-
-@RepositoryRestResource(exported = false)
-interface ReplyRepository : JpaRepository<ReplyEntity, Int> {
-    fun findAllByTid(tid: Int, pageable: Pageable): List<ReplyProjection>
-
-    fun findByRid(rid: Int): ReplyEntity?
-
-    fun findProjectionByRid(rid: Int): ReplyProjection?
-
-    fun deleteAllByTid(tid: Int)
-
-    fun countByTid(tid: Int): Int
-}
+//package com.young_zy.forum.repo
+//
+//import com.young_zy.forum.model.reply.ReplyEntity
+//import com.young_zy.forum.model.reply.ReplyProjection
+//import kotlinx.coroutines.flow.Flow
+//import org.springframework.data.domain.Pageable
+//import org.springframework.data.repository.kotlin.CoroutineCrudRepository
+//
+//
+//interface ReplyRepository : CoroutineCrudRepository<ReplyEntity, Int> {
+//    suspend fun findAllByTid(tid: Int, pageable: Pageable): Flow<ReplyProjection>
+//
+//    suspend fun findByRid(rid: Int): ReplyEntity?
+//
+//    suspend fun findProjectionByRid(rid: Int): ReplyProjection?
+//
+//    suspend fun deleteAllByTid(tid: Int)
+//
+//    suspend fun countByTid(tid: Int): Int
+//}

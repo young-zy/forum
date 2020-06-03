@@ -2,7 +2,7 @@ package com.young_zy.forum.service
 
 
 import com.young_zy.forum.model.thread.ThreadProjection
-import com.young_zy.forum.repo.ThreadRepository
+import com.young_zy.forum.repo.ThreadNativeRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
@@ -16,9 +16,9 @@ class HitRateService {
     private lateinit var hitRateRedisTemplate: RedisTemplate<String, Int>
 
     @Autowired
-    private lateinit var threadRepository: ThreadRepository
+    private lateinit var threadNativeRepository: ThreadNativeRepository
 
-    fun increment(uid: Int, tid: Int) {
+    fun increment(uid: Long, tid: Int) {
         if (check(uid, tid)) {
             if (hitRateRedisTemplate.hasKey("order")) {
                 val current = LocalDateTime.now()
@@ -33,7 +33,7 @@ class HitRateService {
         }
     }
 
-    private fun check(uid: Int, tid: Int): Boolean {
+    private fun check(uid: Long, tid: Int): Boolean {
         return if (hitRateRedisTemplate.opsForValue().get("$uid:$tid") === null) {
             hitRateRedisTemplate.opsForValue().set("$uid:$tid", 1, Duration.ofHours(12))
             true
@@ -42,11 +42,11 @@ class HitRateService {
         }
     }
 
-    fun getOrder(count: Int): List<ThreadProjection> {
+    suspend fun getOrder(count: Int): List<ThreadProjection> {
         val threadIds = hitRateRedisTemplate.opsForZSet().reverseRange("order", 0, count.toLong())!!
         val res = mutableListOf<ThreadProjection>()
         threadIds.forEach flag@{
-            val temp = threadRepository.findByTid(it) ?: return@flag
+            val temp = threadNativeRepository.findByTid(it) ?: return@flag
             res.add(temp)
         }
         return res

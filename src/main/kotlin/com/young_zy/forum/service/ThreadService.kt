@@ -6,39 +6,47 @@ import com.young_zy.forum.model.thread.SearchResultDTO
 import com.young_zy.forum.model.thread.ThreadEntity
 import com.young_zy.forum.model.thread.ThreadObject
 import com.young_zy.forum.model.vote.VoteEntity
-import com.young_zy.forum.repo.ReplyRepository
-import com.young_zy.forum.repo.ThreadRepository
-import com.young_zy.forum.repo.VoteRepository
+import com.young_zy.forum.repo.ReplyNativeRepository
+import com.young_zy.forum.repo.SectionNativeRepository
+import com.young_zy.forum.repo.ThreadNativeRepository
+import com.young_zy.forum.repo.VoteNativeRepository
 import com.young_zy.forum.service.exception.AuthException
 import com.young_zy.forum.service.exception.NotAcceptableException
 import com.young_zy.forum.service.exception.NotFoundException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
-import java.sql.Timestamp
+import org.springframework.transaction.reactive.TransactionalOperator
+import org.springframework.transaction.reactive.executeAndAwait
+import java.time.LocalDateTime
 import kotlin.math.ceil
 
 @Service
 class ThreadService {
     @Autowired
-    private lateinit var threadRepo: ThreadRepository
+    private lateinit var threadNativeRepository: ThreadNativeRepository
 
     @Autowired
-    private lateinit var replyRepo: ReplyRepository
+    private lateinit var replyNativeRepository: ReplyNativeRepository
 
     @Autowired
     private lateinit var loginService: LoginService
 
     @Autowired
-    private lateinit var voteRepo: VoteRepository
+    private lateinit var voteNativeRepository: VoteNativeRepository
 
     @Autowired
     private lateinit var authService: AuthService
 
     @Autowired
+    private lateinit var sectionNativeRepository: SectionNativeRepository
+
+    @Autowired
     private lateinit var hitRateService: HitRateService
+
+    @Autowired
+    private lateinit var transactionalOperator: TransactionalOperator
 
     /**
      * get the thread of the given threadId
@@ -51,27 +59,13 @@ class ThreadService {
      * @throws AuthException when user's auth is not enough
      */
     @Throws(NotFoundException::class, AuthException::class)
-    fun getThread(token: String, threadId: Int, page: Int = 1, size: Int = 10): ThreadObject {
+    suspend fun getThread(token: String, threadId: Int, page: Int = 1, size: Int = 10): ThreadObject {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
-        val threadProjection = threadRepo.findByTid(threadId) ?: throw NotFoundException("thread $threadId not found")
-        val repliesProjection = replyRepo.findAllByTid(threadId,
-                PageRequest.of(page - 1, size,
-                        Sort.by("priority").descending()))
+        val threadProjection = threadNativeRepository.findByTid(threadId)
+                ?: throw NotFoundException("thread $threadId not found")
         val replies = mutableListOf<ReplyObject>()
-        var replyObject: ReplyObject
-        repliesProjection.forEach {
-            replyObject = ReplyObject(it)
-            //search for vote info if is a question
-            if (threadProjection.question) {
-                if (tokenObj == null) {
-                    replyObject.vote = 0
-                } else {
-                    replyObject.vote = voteRepo.findVoteEntityByUidAndRid(tokenObj.uid, it.rid)?.vote ?: 0
-                }
-            }
-            replies.add(replyObject)
-        }
+        replyNativeRepository.findAllByTid(threadId, page, size).collect { replies.add(it) }
         if (tokenObj != null) {
             hitRateService.increment(tokenObj.uid, threadId)
         }
@@ -79,7 +73,7 @@ class ThreadService {
                 threadProjection,
                 replies,
                 page,
-                ceil(replyRepo.countByTid(threadId) / size.toDouble()).toInt()
+                ceil(replyNativeRepository.countByTid(threadId) / size.toDouble()).toInt()
         )
     }
 
@@ -93,15 +87,19 @@ class ThreadService {
      * @throws AuthException when operator's auth is not enough
      * @throws NotFoundException when section not found
      */
-    @Transactional
     @Throws(AuthException::class, NotFoundException::class)
-    fun postThread(token: String?, sectionId: Int, title: String, content: String, isQuestion: Boolean) {
+    suspend fun postThread(token: String?, sectionId: Int, title: String, content: String, isQuestion: Boolean) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
-        val thread = ThreadEntity(sid = sectionId, title = title, uid = tokenObj!!.uid, question = isQuestion, lastReplyUid = tokenObj.uid)
-        threadRepo.saveAndFlush(thread)
-        val replyEntity = ReplyEntity(tid = thread.tid, replyContent = content, priority = 9999.9999, uid = thread.uid)
-        replyRepo.save(replyEntity)
+        transactionalOperator.executeAndAwait {
+            if (!sectionNativeRepository.existsById(sectionId)) {
+                throw NotFoundException("section with $sectionId not found")
+            }
+            val thread = ThreadEntity(sid = sectionId, title = title, uid = tokenObj!!.uid, question = isQuestion, lastReplyUid = tokenObj.uid)
+            val tid = threadNativeRepository.insert(thread)
+            val replyEntity = ReplyEntity(tid = tid, replyContent = content, priority = 9999.9999, uid = thread.uid)
+            replyNativeRepository.insert(replyEntity)
+        }
     }
 
     /**
@@ -112,16 +110,17 @@ class ThreadService {
      * @throws AuthException when operator's auth is not enough
      * @throws NotFoundException when section not found
      */
-    @Transactional
     @Throws(AuthException::class, NotFoundException::class)
-    fun postReply(token: String, threadId: Int, replyContent: String) {
+    suspend fun postReply(token: String, threadId: Int, replyContent: String) {
         val tokenObj = loginService.getToken(token)
-        if (!threadRepo.existsById(threadId)) {
-            throw NotFoundException("thread not found")
+        transactionalOperator.executeAndAwait {
+            if (!threadNativeRepository.existsById(threadId)) {
+                throw NotFoundException("thread not found")
+            }
+            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
+            val replyEntity = ReplyEntity(tid = threadId, replyContent = replyContent, uid = tokenObj!!.uid)
+            replyNativeRepository.insert(replyEntity)
         }
-        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
-        val replyEntity = ReplyEntity(tid = threadId, replyContent = replyContent, uid = tokenObj!!.uid)
-        replyRepo.save(replyEntity)
     }
 
     /**
@@ -132,18 +131,20 @@ class ThreadService {
      *  @throws NotFoundException when thread not found
      *  @throws AuthException when operator's auth is not enough
      */
-    @Transactional
     @Throws(AuthException::class, NotFoundException::class)
-    fun deleteThread(token: String, threadId: Int) {
+    suspend fun deleteThread(token: String, threadId: Int) {
         val tokenObj = loginService.getToken(token)
-        val thread = threadRepo.findThreadEntityByTid(threadId) ?: throw NotFoundException("thread $threadId not found")
-        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SECTION_ADMIN,
-                allowAuthor = true,
-                allowOnlyAuthor = false,
-                sectionId = thread.sid,
-                authorUid = thread.uid))
-        replyRepo.deleteAllByTid(threadId)
-        threadRepo.delete(thread)
+        transactionalOperator.executeAndAwait {
+            val thread = threadNativeRepository.findThreadEntityByTid(threadId)
+                    ?: throw NotFoundException("thread $threadId not found")
+            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SECTION_ADMIN,
+                    allowAuthor = true,
+                    allowOnlyAuthor = false,
+                    sectionId = thread.sid,
+                    authorUid = thread.uid))
+            replyNativeRepository.deleteAllByTid(threadId)
+            threadNativeRepository.delete(thread)
+        }
     }
 
 
@@ -156,18 +157,20 @@ class ThreadService {
      * @throws NotFoundException when reply is not found
      * @throws AuthException when operator's auth is not enough
      */
-    @Transactional
     @Throws(NotFoundException::class, AuthException::class)
-    fun updateReply(token: String, replyId: Int, replyContent: String) {
+    suspend fun updateReply(token: String, replyId: Int, replyContent: String) {
         val tokenObj = loginService.getToken(token)
-        val replyEntity: ReplyEntity = replyRepo.findByRid(replyId) ?: throw NotFoundException("reply not found")
-        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN,
-                allowAuthor = true,
-                allowOnlyAuthor = true,
-                authorUid = replyEntity.uid))
-        replyEntity.replyContent = replyContent
-        replyEntity.lastEditTime = Timestamp(System.currentTimeMillis())
-        replyRepo.save(replyEntity)
+        transactionalOperator.executeAndAwait {
+            val replyEntity: ReplyEntity = replyNativeRepository.findReplyEntityByRid(replyId)
+                    ?: throw NotFoundException("reply not found")
+            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN,
+                    allowAuthor = true,
+                    allowOnlyAuthor = true,
+                    authorUid = replyEntity.uid))
+            replyEntity.replyContent = replyContent
+            replyEntity.lastEditTime = LocalDateTime.now()
+            replyNativeRepository.update(replyEntity)
+        }
     }
 
     /**
@@ -177,20 +180,21 @@ class ThreadService {
      * @throws NotFoundException when reply not found
      * @throws AuthException when operator's auth is not enough
      */
-    @Transactional
     @Throws(NotFoundException::class, AuthException::class)
-    fun deleteReply(token: String, replyId: Int) {
+    suspend fun deleteReply(token: String, replyId: Int) {
         val tokenObj = loginService.getToken(token)
-        val replyEntity: ReplyEntity = replyRepo.findByRid(replyId)
-                ?: throw NotFoundException("reply $replyId not found")
-        val threadEntity = threadRepo.findThreadEntityByTid(replyEntity.tid)
-                ?: throw NotFoundException("thread $replyEntity.tid not found")
-        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SECTION_ADMIN,
-                allowAuthor = true,
-                allowOnlyAuthor = false,
-                authorUid = replyEntity.uid,
-                sectionId = threadEntity.sid))
-        replyRepo.delete(replyEntity)
+        transactionalOperator.executeAndAwait {
+            val replyEntity = replyNativeRepository.findReplyEntityByRid(replyId)
+                    ?: throw NotFoundException("reply $replyId not found")
+            val threadEntity = threadNativeRepository.findThreadEntityByTid(replyEntity.tid)
+                    ?: throw NotFoundException("thread ${replyEntity.tid} not found")
+            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SECTION_ADMIN,
+                    allowAuthor = true,
+                    allowOnlyAuthor = false,
+                    authorUid = replyEntity.uid,
+                    sectionId = threadEntity.sid))
+            replyNativeRepository.delete(replyEntity)
+        }
     }
 
     /**
@@ -201,65 +205,62 @@ class ThreadService {
      * @param rid reply tobe voted
      * @param state state tobe set to the reply
      */
-    @Transactional
     @Throws(AuthException::class, NotFoundException::class, NotAcceptableException::class)
-    fun vote(token: String, rid: Int, state: Int) {
+    suspend fun vote(token: String, rid: Int, state: Int) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
-        val reply = replyRepo.findByRid(rid)
-        if (!(reply?.threadByTid?.question ?: throw NotFoundException("reply $rid not found"))) {
-            throw NotAcceptableException("reply $rid is not in a thread that is a question")
-        }
-        var voteEntity = voteRepo.findVoteEntityByUidAndRid(tokenObj!!.uid, rid)
-        if (voteEntity !== null) {
-            if (voteEntity.vote > 0 && state < 0) {
-                reply.upVote--
-                reply.downVote++
-            } else if (voteEntity.vote < 0 && state > 0) {
-                reply.upVote++
-                reply.downVote--
-            } else if (voteEntity.vote == state) {      //same
+        transactionalOperator.executeAndAwait {
+            val reply = replyNativeRepository.findReplyEntityByRid(rid)
+                    ?: throw NotFoundException("reply $rid not found")
+//        if (!(reply?.threadByTid?.question ?: throw NotFoundException("reply $rid not found"))) {
+//            throw NotAcceptableException("reply $rid is not in a thread that is a question")
+//        }
+            var voteEntity = voteNativeRepository.findVoteEntityByUidAndRid(tokenObj!!.uid, rid)
+            if (voteEntity !== null) {
+                if (voteEntity.vote > 0 && state < 0) {
+                    reply.upVote--
+                    reply.downVote++
+                } else if (voteEntity.vote < 0 && state > 0) {
+                    reply.upVote++
+                    reply.downVote--
+                } else if (voteEntity.vote == state) {      //same
 
+                } else {
+                    if (state > 0) {
+                        reply.upVote++
+                    } else if (state == 0) {
+                        if (voteEntity.vote > 0) {
+                            reply.upVote--
+                        } else {
+                            reply.downVote--
+                        }
+                    } else {
+                        reply.downVote++
+                    }
+                }
             } else {
+                voteEntity = VoteEntity(tokenObj.uid, rid, state)
                 if (state > 0) {
                     reply.upVote++
-                } else if (state == 0) {
-                    if (voteEntity.vote > 0) {
-                        reply.upVote--
-                    } else {
-                        reply.downVote--
-                    }
-                } else {
+                } else if (state < 0) {
                     reply.downVote++
                 }
             }
-        } else {
-            voteEntity = VoteEntity(tokenObj.uid, rid, state)
-            if (state > 0) {
-                reply.upVote++
-            } else if (state < 0) {
-                reply.downVote++
-            }
+            replyNativeRepository.update(reply)
+            voteNativeRepository.save(voteEntity)
         }
-        replyRepo.save(reply)
-        voteRepo.save(voteEntity)
     }
 
     @Throws(NotFoundException::class, AuthException::class)
-    fun getReply(token: String, replyId: Int): ReplyObject {
+    suspend fun getReply(token: String, replyId: Int): ReplyObject {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
-        val reply = replyRepo.findProjectionByRid(replyId) ?: throw NotFoundException("reply of rid $replyId not found")
-        return ReplyObject(reply)
+        return replyNativeRepository.findByRid(replyId, tokenObj!!.uid)
+                ?: throw NotFoundException("reply of rid $replyId not found")
     }
 
     @Throws(AuthException::class)
-    fun search(token: String, keyWord: String, page: Int, size: Int): List<SearchResultDTO> {
-        val res = threadRepo.searchInTitle(keyWord, PageRequest.of(page - 1, size))
-        val ret = mutableListOf<SearchResultDTO>()
-        res.forEach {
-            ret.add(SearchResultDTO(it))
-        }
-        return ret
+    suspend fun search(token: String, keyWord: String, page: Int, size: Int): Flow<SearchResultDTO> {
+        return threadNativeRepository.searchInTitle(keyWord, page, size)
     }
 }

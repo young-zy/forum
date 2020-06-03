@@ -1,16 +1,17 @@
 package com.young_zy.forum.model.thread
 
-import com.young_zy.forum.model.user.SimpleUser
-import org.springframework.data.rest.core.config.Projection
-import java.sql.Timestamp
+import com.young_zy.forum.model.user.SimpleUserObject
+import java.time.LocalDateTime
 
-@Projection(types = [ThreadEntity::class])
-interface ThreadInListProjection {
-    var tid: Int
-    var title: String
-    var lastReplyTime: Timestamp
-    var postTime: Timestamp
-    var author: SimpleUser
-    var question: Boolean
-    var hasBestAnswer: Boolean
+class ThreadInListProjection(
+        var tid: Int,
+        var title: String,
+        var lastReplyTime: LocalDateTime,
+        var postTime: LocalDateTime,
+        uid: Long,
+        username: String,
+        var question: Boolean,
+        var hasBestAnswer: Boolean
+) {
+    var author = SimpleUserObject(uid, username)
 }

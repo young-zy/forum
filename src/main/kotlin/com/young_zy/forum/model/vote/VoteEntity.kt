@@ -1,18 +1,13 @@
 package com.young_zy.forum.model.vote
 
-import javax.persistence.*
+import org.springframework.data.relational.core.mapping.Column
 
-@Entity
-@Table(name = "vote", schema = "Forum")
-@IdClass(VoteEntityPK::class)
+
 data class VoteEntity(
-        @Id
-        @Column(name = "uid", nullable = false)
-        var uid: Int,
-        @Id
-        @Column(name = "rid", nullable = false, precision = 0)
+        @Column("uid")
+        var uid: Long,
+        @Column("rid")
         var rid: Int,
-        @Basic
-        @Column(name = "vote", nullable = false)
+        @Column("vote")
         var vote: Int
 )

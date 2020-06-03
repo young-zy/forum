@@ -1,47 +1,25 @@
 package com.young_zy.forum.model.user
 
-import com.google.gson.Gson
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Column
+import org.springframework.data.relational.core.mapping.Table
 import java.sql.Date
-import javax.persistence.*
 
-@Entity
-@Table(name = "user", schema = "Forum")
+@Table("user")
 data class UserEntity(
-        @Column(name = "uid", nullable = false)
+        @Column("uid")
         @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        var uid: Int = 0,
-        @Column(name = "username", nullable = false, length = 45)
-        @Basic
+        var uid: Long? = null,
+        @Column("username")
         var username: String = "",
-        @Column(name = "email", nullable = false, length = 45)
-        @Basic
+        @Column("email")
         var email: String = "",
-        @Column(name = "hashedPassword", nullable = false, length = 600)
-        @Basic
+        @Column("hashedPassword")
         var hashedPassword: String = "",
-        @Column(name = "regDate", nullable = false)
-        @Basic
+        @Column("regDate")
         var regDate: Date = Date(0),
-        @Column(name = "auth", nullable = false)
-        @Convert(converter = UserAuthConverter::class)
+        @Column("auth")
         var auth: UserAuth = UserAuth(),
-        @Column(name = "tag_priority", nullable = false)
-        @Basic
+        @Column("tag_priority")
         var tagPriority: String = "0"
 )
-
-@Converter
-class UserAuthConverter : AttributeConverter<UserAuth, String> {
-
-        private val gson = Gson()
-
-        override fun convertToDatabaseColumn(attribute: UserAuth?): String {
-                return gson.toJson(attribute)
-        }
-
-        override fun convertToEntityAttribute(dbData: String?): UserAuth {
-                return gson.fromJson(dbData, UserAuth::class.java)
-        }
-
-}

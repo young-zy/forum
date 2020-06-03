@@ -1,44 +1,36 @@
 package com.young_zy.forum.model.thread
 
-import com.young_zy.forum.model.user.UserEntity
-import java.sql.Timestamp
-import javax.persistence.*
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Column
+import org.springframework.data.relational.core.mapping.Table
+import java.time.LocalDateTime
 
-@Entity
-@Table(name = "thread", schema = "Forum")
+@Table("thread")
 data class ThreadEntity(
         @Id
-        @Column(name = "tid", nullable = false, precision = 0)
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        var tid: Int = 0,
-        @Basic
-        @Column(name = "sid", nullable = false, precision = 0)
+        @Column("tid")
+        var tid: Int? = null,
+        @Column("sid")
         var sid: Int = 0,
-        @Basic
-        @Column(name = "uid", nullable = false)
-        var uid: Int = 0,
-        @Basic
-        @Column(name = "title", nullable = false, length = 45)
+        @Column("uid")
+        var uid: Long = 0,
+        @Column("title")
         var title: String = "",
-        @Basic
-        @Column(name = "lastReplyTime", nullable = true)
-        var lastReplyTime: Timestamp = Timestamp(System.currentTimeMillis()),
-        @Basic
-        @Column(name = "lastReplyUid", nullable = true)
-        var lastReplyUid: Int = 0,
-        @Basic
-        @Column(name = "hasBestAnswer", nullable = true)
+        @Column("lastReplyTime")
+        var lastReplyTime: LocalDateTime = LocalDateTime.now(),
+        @Column("lastReplyUid")
+        var lastReplyUid: Long = 0,
+        @Column("hasBestAnswer")
         var hasBestAnswer: Boolean = false,
-        @Basic
-        @Column(name = "postTime", nullable = false)
-        var postTime: Timestamp = Timestamp(System.currentTimeMillis()),
-        @Basic
-        @Column(name = "question", nullable = false)
-        var question: Boolean,
-        @ManyToOne
-        @JoinColumn(name = "uid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
-        var author: UserEntity? = null,
-        @ManyToOne
-        @JoinColumn(name = "lastReplyUid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
-        var userByLastReplyUid: UserEntity? = null
+        @Column("postTime")
+        var postTime: LocalDateTime = LocalDateTime.now(),
+        @Column("question")
+        var question: Boolean
+//        ,
+//        @ManyToOne
+//        @JoinColumn(name = "uid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
+//        var author: UserEntity? = null,
+//        @ManyToOne
+//        @JoinColumn(name = "lastReplyUid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
+//        var userByLastReplyUid: UserEntity? = null
 )

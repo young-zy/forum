@@ -1,14 +1,15 @@
 package com.young_zy.forum.model.section
 
-import javax.persistence.*
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Column
+import org.springframework.data.relational.core.mapping.Table
 
-@Entity
-@Table(name = "section", schema = "Forum")
+
+@Table("section")
 data class SectionEntity(
         @Id
-        @Column(name = "sid", nullable = false)
+        @Column("sid")
         var sid: Int = 0,
-        @Basic
-        @Column(name = "section_name", nullable = true, length = 45)
+        @Column("section_name")
         var sectionName: String? = null
 )

@@ -13,7 +13,7 @@ data class AuthConfig(
         var authLevel: Enum<AuthLevel> = AuthLevel.SYSTEM_ADMIN,
         var allowAuthor: Boolean = false,
         var allowOnlyAuthor: Boolean = false,
-        var authorUid: Int = -1,
+        var authorUid: Long = -1,
         var sectionId: Int = -1
 )
 

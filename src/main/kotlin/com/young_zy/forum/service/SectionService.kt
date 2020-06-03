@@ -2,26 +2,31 @@ package com.young_zy.forum.service
 
 import com.young_zy.forum.model.section.SectionEntity
 import com.young_zy.forum.model.section.SectionObject
-import com.young_zy.forum.repo.SectionRepository
-import com.young_zy.forum.repo.ThreadRepository
+import com.young_zy.forum.model.thread.ThreadInListProjection
+import com.young_zy.forum.repo.SectionNativeRepository
+import com.young_zy.forum.repo.ThreadNativeRepository
 import com.young_zy.forum.service.exception.AuthException
 import com.young_zy.forum.service.exception.NotAcceptableException
 import com.young_zy.forum.service.exception.NotFoundException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.domain.PageRequest
-import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.reactive.TransactionalOperator
+import org.springframework.transaction.reactive.executeAndAwait
 import kotlin.math.ceil
 
 @Service
 class SectionService {
 
     @Autowired
-    private lateinit var sectionRepository: SectionRepository
+    private lateinit var sectionNativeRepository: SectionNativeRepository
 
     @Autowired
-    private lateinit var threadRepository: ThreadRepository
+    private lateinit var threadNativeRepository: ThreadNativeRepository
+
+    @Autowired
+    private lateinit var transactionOperator: TransactionalOperator
 
     @Autowired
     private lateinit var authService: AuthService
@@ -29,52 +34,56 @@ class SectionService {
     @Autowired
     private lateinit var loginService: LoginService
 
-    fun hasSection(sectionId: Int): Boolean {
-        return sectionRepository.existsById(sectionId)
+    suspend fun hasSection(sectionId: Int): Boolean {
+        return sectionNativeRepository.existsById(sectionId)
     }
 
     @Throws(AuthException::class, NotFoundException::class)
-    fun getSection(token: String, sectionId: Int, page: Int = 1, size: Int = 10): SectionObject {
+    suspend fun getSection(token: String, sectionId: Int, page: Int = 1, size: Int = 10): SectionObject {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
-        val sectionEntity = sectionRepository.findSectionEntityBySid(sectionId)
+        val sectionEntity = sectionNativeRepository.findSectionEntityBySid(sectionId)
                 ?: throw NotFoundException("section $sectionId not found")
-        val threads = threadRepository.findAllBySid(sectionId,
-                PageRequest.of(page - 1, size, Sort.by("lastReplyTime").descending()))
+        val threads = mutableListOf<ThreadInListProjection>()
+        threadNativeRepository.findAllBySid(sectionId, page, size).collect {
+            threads.add(it)
+        }
         return SectionObject(
                 sectionEntity,
                 threads,
                 page,
-                ceil(threadRepository.countBySid(sectionId) / size.toDouble()).toInt()
+                ceil(threadNativeRepository.countBySid(sectionId) / size.toDouble()).toInt()
         )
     }
 
     @Throws(AuthException::class)
-    fun getSectionList(token: String): List<SectionEntity> {
+    suspend fun getSectionList(token: String): Flow<SectionEntity> {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
-        return sectionRepository.findAll()
+        return sectionNativeRepository.findAll()
     }
 
     @Throws(AuthException::class, NotAcceptableException::class)
-    @Transactional
-    fun addSection(token: String, sectionName: String) {
+    suspend fun addSection(token: String, sectionName: String) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
-        if (sectionRepository.existsBySectionName(sectionName)) {
-            throw NotAcceptableException("section with $sectionName already exists")
+        transactionOperator.executeAndAwait {
+            if (sectionNativeRepository.existsBySectionName(sectionName)) {
+                throw NotAcceptableException("section with $sectionName already exists")
+            }
+            val section = SectionEntity(sectionName = sectionName)
+            sectionNativeRepository.insert(section)
         }
-        val section = SectionEntity(sectionName = sectionName)
-        sectionRepository.save(section)
     }
 
     @Throws(AuthException::class, NotFoundException::class)
-    @Transactional
-    fun deleteSection(token: String, sectionId: Int) {
+    suspend fun deleteSection(token: String, sectionId: Int) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
-        val section = sectionRepository.findSectionEntityBySid(sectionId)
-                ?: throw NotFoundException("sectionId $sectionId not found")
-        sectionRepository.delete(section)
+        transactionOperator.executeAndAwait {
+            val section = sectionNativeRepository.findSectionEntityBySid(sectionId)
+                    ?: throw NotFoundException("sectionId $sectionId not found")
+            sectionNativeRepository.delete(section)
+        }
     }
 }

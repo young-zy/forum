@@ -3,20 +3,21 @@ package com.young_zy.forum.service
 import com.young_zy.forum.model.user.DetailedUser
 import com.young_zy.forum.model.user.UserAuth
 import com.young_zy.forum.model.user.UserEntity
-import com.young_zy.forum.repo.UserRepository
+import com.young_zy.forum.repo.UserNativeRepository
 import com.young_zy.forum.service.exception.AuthException
 import com.young_zy.forum.service.exception.NotAcceptableException
 import com.young_zy.forum.service.exception.NotFoundException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.reactive.TransactionalOperator
+import org.springframework.transaction.reactive.executeAndAwait
 import java.sql.Date
 
 @Service
 class UserService {
 
     @Autowired
-    private lateinit var userRepository: UserRepository
+    private lateinit var userNativeRepository: UserNativeRepository
 
     @Autowired
     private lateinit var loginService: LoginService
@@ -30,13 +31,16 @@ class UserService {
     @Autowired
     private lateinit var authService: AuthService
 
+    @Autowired
+    private lateinit var transactionalOperator: TransactionalOperator
+
     /**
      * get UserEntity through provided username
      * @param username username of the user
      * @return UserEntity
      */
-    fun getUser(username: String): UserEntity? {
-        return userRepository.findByUsername(username)
+    suspend fun getUser(username: String): UserEntity? {
+        return userNativeRepository.findByUsername(username)
     }
 
     /**
@@ -44,8 +48,8 @@ class UserService {
      * @param uid uid of the user
      * @return UserEntity
      */
-    fun getUser(uid: Int): UserEntity {
-        return userRepository.findByUid(uid) ?: throw NotFoundException("uid $uid not found")
+    suspend fun getUser(uid: Long): UserEntity {
+        return userNativeRepository.findByUid(uid) ?: throw NotFoundException("uid $uid not found")
     }
 
     /**
@@ -53,14 +57,14 @@ class UserService {
      * @param username designated username tobe queried
      * @return true if username already exist
      */
-    fun existsUsername(username: String): Boolean {
-        return userRepository.existsByUsername(username)
+    suspend fun existsUsername(username: String): Boolean {
+        return userNativeRepository.existsByUsername(username)
     }
 
-    fun getDetailedUser(token: String, uid: Int?): DetailedUser {
+    suspend fun getDetailedUser(token: String, uid: Long?): DetailedUser {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER, allowAuthor = true))
-        return userRepository.findDetailedUserEntityByUid(uid ?: tokenObj!!.uid)
+        return userNativeRepository.findDetailedUserEntityByUid(uid ?: tokenObj!!.uid)
                 ?: throw NotFoundException("uid $uid not found")
     }
 
@@ -72,23 +76,24 @@ class UserService {
      * @throws IllegalArgumentException when any of the parameter doesn't match regex requirement
      * @throws NotAcceptableException when the username already exists
      */
-    @Transactional
     @Throws(IllegalArgumentException::class, NotAcceptableException::class)
-    fun register(username: String, password: String, email: String) {
-        if (existsUsername(username)) {
-            throw NotAcceptableException("username $username already exists")
-        } else {
-            regexService.validateUsername(username)
-            regexService.validatePassword(password)
-            regexService.validateEmail(email)
-            val userAuth = UserAuth(user = true)
-            val user = UserEntity()
-            user.username = username
-            user.hashedPassword = PasswordHash.createHash(password)
-            user.auth = userAuth
-            user.regDate = Date(System.currentTimeMillis())
-            user.email = email
-            userRepository.save(user)
+    suspend fun register(username: String, password: String, email: String) {
+        transactionalOperator.executeAndAwait {
+            if (existsUsername(username)) {
+                throw NotAcceptableException("username $username already exists")
+            } else {
+                regexService.validateUsername(username)
+                regexService.validatePassword(password)
+                regexService.validateEmail(email)
+                val userAuth = UserAuth(user = true)
+                val user = UserEntity()
+                user.username = username
+                user.hashedPassword = PasswordHash.createHash(password)
+                user.auth = userAuth
+                user.regDate = Date(System.currentTimeMillis())
+                user.email = email
+                userNativeRepository.insert(user)
+            }
         }
     }
 
@@ -102,33 +107,34 @@ class UserService {
      * @throws NotAcceptableException when username already exists or password is incorrect
      * @throws IllegalArgumentException when password or email doesn't fit regex
      */
-    @Transactional
     @Throws(NotAcceptableException::class, NotAcceptableException::class, IllegalArgumentException::class, AuthException::class)
-    fun userInfoUpdate(token: String, originalPassword: String, newPassword: String?, newUsername: String?, newEmail: String?) {
+    suspend fun userInfoUpdate(token: String, originalPassword: String, newPassword: String?, newUsername: String?, newEmail: String?) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
-        val userEntity = getUser(tokenObj!!.uid)
-        if (!PasswordHash.validatePassword(originalPassword, userEntity.hashedPassword)) {
-            throw NotAcceptableException("Password Incorrect")
+        transactionalOperator.executeAndAwait {
+            val userEntity = getUser(tokenObj!!.uid)
+            if (!PasswordHash.validatePassword(originalPassword, userEntity.hashedPassword)) {
+                throw NotAcceptableException("Password Incorrect")
+            }
+            if (newUsername != null) {
+                regexService.validateUsername(newUsername)
+            }
+            if (newPassword != null) {
+                regexService.validatePassword(newPassword)
+            }
+            if (newEmail != null) {
+                regexService.validateEmail(newEmail)
+            }
+            userEntity.email = newEmail ?: userEntity.email
+            if (newUsername != userEntity.username && existsUsername(newUsername ?: "")) {
+                throw NotAcceptableException("Username $newUsername already exists")
+            }
+            userEntity.username = newUsername ?: userEntity.username
+            if (newPassword != null) {
+                userEntity.hashedPassword = PasswordHash.createHash(newPassword)
+            }
+            userNativeRepository.update(userEntity)
         }
-        if (newUsername != null) {
-            regexService.validateUsername(newUsername)
-        }
-        if (newPassword != null) {
-            regexService.validatePassword(newPassword)
-        }
-        if (newEmail != null) {
-            regexService.validateEmail(newEmail)
-        }
-        userEntity.email = newEmail ?: userEntity.email
-        if (newUsername != userEntity.username && existsUsername(newUsername ?: "")) {
-            throw NotAcceptableException("Username $newUsername already exists")
-        }
-        userEntity.username = newUsername ?: userEntity.username
-        if (newPassword != null) {
-            userEntity.hashedPassword = PasswordHash.createHash(newPassword)
-        }
-        userRepository.save(userEntity)
     }
 
     /**
@@ -140,15 +146,16 @@ class UserService {
      * @throws NotFoundException when user doesn't exist
      * @throws AuthException when operator's auth is not enough
      */
-    @Transactional
     @Throws(NotFoundException::class, AuthException::class)
-    fun giveSystemAdmin(token: String, userIds: List<Int>) {
+    suspend fun giveSystemAdmin(token: String, userIds: List<Long>) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
-        userIds.forEach {
-            val user = getUser(it)
-            user.auth.systemAdmin = false
-            userRepository.save(user)
+        transactionalOperator.executeAndAwait {
+            userIds.forEach {
+                val user = userNativeRepository.findByUid(it) ?: throw NotFoundException("user with $it not found")
+                user.auth.systemAdmin = false
+                userNativeRepository.update(user)
+            }
         }
     }
 
@@ -161,15 +168,16 @@ class UserService {
      * @throws NotFoundException when user doesn't exist
      * @throws AuthException when operator's auth is not enough
      */
-    @Transactional
     @Throws(NotFoundException::class, AuthException::class)
-    fun revokeSystemAdmin(token: String, userIds: List<Int>) {
+    suspend fun revokeSystemAdmin(token: String, userIds: List<Long>) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
-        userIds.forEach {
-            val user = getUser(it)
-            user.auth.systemAdmin = false
-            userRepository.save(user)
+        transactionalOperator.executeAndAwait {
+            userIds.forEach {
+                val user = userNativeRepository.findByUid(it) ?: throw NotFoundException("user with $it not found")
+                user.auth.systemAdmin = false
+                userNativeRepository.update(user)
+            }
         }
     }
 
@@ -183,21 +191,22 @@ class UserService {
      * @throws NotFoundException when user or section doesn't exist
      * @throws AuthException when operator's auth is not enough
      */
-    @Transactional
     @Throws(NotFoundException::class, AuthException::class)
-    fun giveSectionAdmin(token: String, userIds: List<Int>, sectionIds: List<Int>) {
+    suspend fun giveSectionAdmin(token: String, userIds: List<Long>, sectionIds: List<Int>) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
-        userIds.forEach {
-            val user = getUser(it)
-            user.auth.sectionAdmin = true
-            sectionIds.forEach { sid ->
-                if (!sectionService.hasSection(sid)) {
-                    throw NotFoundException("section $sid not found")
+        transactionalOperator.executeAndAwait {
+            userIds.forEach {
+                val user = userNativeRepository.findByUid(it) ?: throw NotFoundException("user with $it not found")
+                user.auth.sectionAdmin = true
+                sectionIds.forEach { sid ->
+                    if (!sectionService.hasSection(sid)) {
+                        throw NotFoundException("section $sid not found")
+                    }
+                    user.auth.sections.add(sid)
                 }
-                user.auth.sections.add(sid)
+                userNativeRepository.update(user)
             }
-            userRepository.save(user)
         }
     }
 
@@ -212,23 +221,26 @@ class UserService {
      * @throws NotFoundException when user or section doesn't exist
      * @throws AuthException when operator's auth is not enough
      */
-    @Transactional
     @Throws(NotFoundException::class, AuthException::class)
-    fun revokeSectionAdmin(token: String, userIds: List<Int>, sectionIds: List<Int>) {
+    suspend fun revokeSectionAdmin(token: String, userIds: List<Long>, sectionIds: List<Int>) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
-        userIds.forEach {
-            val user = getUser(it)
-            sectionIds.forEach { sid ->
-                if (!sectionService.hasSection(sid)) {
-                    throw NotFoundException("section $sid not found")
+        transactionalOperator.executeAndAwait {
+            userIds.forEach {
+                val user = userNativeRepository.findByUid(it) ?: throw NotFoundException("user with $it not found")
+                sectionIds.forEach { sid ->
+                    if (!sectionService.hasSection(sid)) {
+                        throw NotFoundException("section $sid not found")
+                    }
+                    user.auth.sections.remove(sid)
                 }
-                user.auth.sections.remove(sid)
+                if (user.auth.sections.isEmpty()) {
+                    user.auth.sectionAdmin = false
+                }
+                userNativeRepository.update(user)
+                //TODO revoke user token
+//            val userToken = loginService.getToken()
             }
-            if (user.auth.sections.isEmpty()) {
-                user.auth.sectionAdmin = false
-            }
-            userRepository.save(user)
         }
     }
 }

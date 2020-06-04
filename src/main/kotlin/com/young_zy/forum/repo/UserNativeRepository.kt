@@ -10,7 +10,7 @@ import org.springframework.data.r2dbc.core.DatabaseClient
 import org.springframework.data.r2dbc.core.awaitOneOrNull
 import org.springframework.data.relational.core.query.Criteria.where
 import org.springframework.stereotype.Repository
-import java.sql.Timestamp
+import java.time.LocalDate
 
 @Repository
 class UserNativeRepository {
@@ -32,16 +32,6 @@ class UserNativeRepository {
                 .select()
                 .from(UserEntity::class.java)
                 .matching(where("username").`is`(username))
-                .fetch()
-                .awaitOneOrNull()
-    }
-
-    suspend fun findDetailedUserByUid(uid: Int): DetailedUser? {
-        return r2dbcDatabaseClient
-                .select()
-                .from("user")
-                .`as`(DetailedUser::class.java)
-                .matching(where("uid").`is`(uid))
                 .fetch()
                 .awaitOneOrNull()
     }
@@ -74,14 +64,15 @@ class UserNativeRepository {
     }
 
     suspend fun findDetailedUserEntityByUid(uid: Long): DetailedUser? {
-        return r2dbcDatabaseClient.execute("select uid, username, email, auth, regdate from user")
+        return r2dbcDatabaseClient.execute("select uid, username, email, auth, regdate from user where uid = :uid")
+                .bind("uid", uid)
                 .map { t ->
                     DetailedUser(
                             t["uid"] as Long,
                             t["username"] as String,
                             t["email"] as String,
                             UserAuth(t["auth"] as String),
-                            t["regDate"] as Timestamp
+                            t["regDate"] as LocalDate
                     )
                 }
                 .awaitOneOrNull()

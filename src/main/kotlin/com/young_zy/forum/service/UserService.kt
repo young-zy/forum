@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
-import java.sql.Date
+import java.time.LocalDate
 
 @Service
 class UserService {
@@ -90,7 +90,7 @@ class UserService {
                 user.username = username
                 user.hashedPassword = PasswordHash.createHash(password)
                 user.auth = userAuth
-                user.regDate = Date(System.currentTimeMillis())
+                user.regDate = LocalDate.now()
                 user.email = email
                 userNativeRepository.insert(user)
             }

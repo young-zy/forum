@@ -3,7 +3,7 @@ package com.young_zy.forum.model.user
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
-import java.sql.Date
+import java.time.LocalDate
 
 @Table("user")
 data class UserEntity(
@@ -17,7 +17,7 @@ data class UserEntity(
         @Column("hashedPassword")
         var hashedPassword: String = "",
         @Column("regDate")
-        var regDate: Date = Date(0),
+        var regDate: LocalDate = LocalDate.MIN,
         @Column("auth")
         var auth: UserAuth = UserAuth(),
         @Column("tag_priority")

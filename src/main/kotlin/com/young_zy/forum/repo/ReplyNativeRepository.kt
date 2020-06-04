@@ -1,5 +1,6 @@
 package com.young_zy.forum.repo
 
+import com.young_zy.forum.config.toBoolean
 import com.young_zy.forum.model.reply.ReplyEntity
 import com.young_zy.forum.model.reply.ReplyObject
 import io.r2dbc.spi.Row
@@ -37,7 +38,7 @@ class ReplyNativeRepository {
                 t["replyTime"] as LocalDateTime,
                 t["lastEditTime"] as LocalDateTime,
                 (t["priority"] as BigDecimal).toDouble(),
-                (t["isBestAnswer"] as Byte).toInt() != 0,
+                (t["isBestAnswer"] as Byte).toBoolean(),
                 t["upVote"] as Int,
                 t["uid"] as Long,
                 t["username"] as String,

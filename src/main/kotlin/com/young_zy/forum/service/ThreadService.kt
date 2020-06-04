@@ -13,8 +13,7 @@ import com.young_zy.forum.repo.VoteNativeRepository
 import com.young_zy.forum.service.exception.AuthException
 import com.young_zy.forum.service.exception.NotAcceptableException
 import com.young_zy.forum.service.exception.NotFoundException
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.toList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
@@ -64,14 +63,12 @@ class ThreadService {
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
         val threadProjection = threadNativeRepository.findByTid(threadId)
                 ?: throw NotFoundException("thread $threadId not found")
-        val replies = mutableListOf<ReplyObject>()
-        replyNativeRepository.findAllByTid(threadId, page, size).collect { replies.add(it) }
         if (tokenObj != null) {
             hitRateService.increment(tokenObj.uid, threadProjection.tid)
         }
         return ThreadObject(
                 threadProjection,
-                replies,
+                replyNativeRepository.findAllByTid(threadId, page, size).toList(),
                 page,
                 ceil(replyNativeRepository.countByTid(threadId) / size.toDouble()).toInt()
         )
@@ -260,7 +257,7 @@ class ThreadService {
     }
 
     @Throws(AuthException::class)
-    suspend fun search(token: String, keyWord: String, page: Int, size: Int): Flow<SearchResultDTO> {
-        return threadNativeRepository.searchInTitle(keyWord, page, size)
+    suspend fun search(token: String, keyWord: String, page: Int, size: Int): List<SearchResultDTO> {
+        return threadNativeRepository.searchInTitle(keyWord, page, size).toList()
     }
 }

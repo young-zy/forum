@@ -1,5 +1,6 @@
 package com.young_zy.forum.repo
 
+import com.young_zy.forum.config.toBoolean
 import com.young_zy.forum.model.thread.SearchResultDTO
 import com.young_zy.forum.model.thread.ThreadEntity
 import com.young_zy.forum.model.thread.ThreadInListProjection
@@ -42,7 +43,7 @@ class ThreadNativeRepository {
                             t["postTime"] as LocalDateTime,
                             t["uid"] as Long,
                             t["username"] as String,
-                            t["question"] as Boolean,
+                            (t["question"] as Byte).toBoolean(),
                             t["hasBestAnswer"] as Boolean
                     )
                 }
@@ -59,8 +60,8 @@ class ThreadNativeRepository {
                             t["title"] as String,
                             t["lastReplyTime"] as LocalDateTime,
                             t["postTime"] as LocalDateTime,
-                            (t["question"] as Byte).toInt() != 0,
-                            (t["hasBestAnswer"] as Byte).toInt() != 0,
+                            (t["question"] as Byte).toBoolean(),
+                            (t["hasBestAnswer"] as Byte).toBoolean(),
                             t["uid"] as Long,
                             t["username"] as String
                     )
@@ -93,8 +94,8 @@ class ThreadNativeRepository {
                             t["postTime"] as LocalDateTime,
                             t["uid"] as Long,
                             t["username"] as String,
-                            t["question"] as Boolean,
-                            t["hasBestAnswer"] as Boolean
+                            (t["question"] as Byte).toBoolean(),
+                            (t["hasBestAnswer"] as Byte).toBoolean()
                     )
                 }
                 .asFlow()

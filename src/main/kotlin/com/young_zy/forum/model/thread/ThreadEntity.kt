@@ -9,9 +9,9 @@ import java.time.LocalDateTime
 data class ThreadEntity(
         @Id
         @Column("tid")
-        var tid: Int? = null,
+        var tid: Long? = null,
         @Column("sid")
-        var sid: Int = 0,
+        var sid: Long = 0,
         @Column("uid")
         var uid: Long = 0,
         @Column("title")

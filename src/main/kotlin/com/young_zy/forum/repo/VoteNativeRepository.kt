@@ -12,7 +12,7 @@ class VoteNativeRepository {
     @Autowired
     private lateinit var r2dbcDatabaseClient: DatabaseClient
 
-    suspend fun findVoteEntityByUidAndRid(uid: Long, rid: Int): VoteEntity? {
+    suspend fun findVoteEntityByUidAndRid(uid: Long, rid: Long): VoteEntity? {
         return r2dbcDatabaseClient.execute("select uid, rid, vote from vote where uid=:uid and rid=:rid")
                 .`as`(VoteEntity::class.java)
                 .bind("uid", uid)

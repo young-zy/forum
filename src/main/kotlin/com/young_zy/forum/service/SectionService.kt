@@ -34,7 +34,7 @@ class SectionService {
     @Autowired
     private lateinit var loginService: LoginService
 
-    suspend fun hasSection(sectionId: Int): Boolean {
+    suspend fun hasSection(sectionId: Long): Boolean {
         return sectionNativeRepository.existsById(sectionId)
     }
 

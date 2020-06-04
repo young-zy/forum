@@ -9,9 +9,9 @@ import java.time.LocalDateTime
 data class ReplyEntity(
         @Column("rid")
         @Id
-        var rid: Int? = null,
+        var rid: Long? = null,
         @Column("tid")
-        var tid: Int = 0,
+        var tid: Long = 0,
         @Column("replyContent")
         var replyContent: String = "",
         @Column("uid")

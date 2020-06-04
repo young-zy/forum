@@ -5,7 +5,7 @@ import com.google.gson.Gson
 data class UserAuth(
         var systemAdmin: Boolean = false,
         var sectionAdmin: Boolean = false,
-        var sections: MutableList<Int> = mutableListOf(),
+        var sections: MutableList<Long> = mutableListOf(),
         var user: Boolean = false,
         var blocked: Boolean = false
 ) {

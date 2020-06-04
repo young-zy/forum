@@ -4,7 +4,7 @@ import com.young_zy.forum.model.user.SimpleUserObject
 import java.time.LocalDateTime
 
 class ReplyObject(
-        val replyId: Int,
+        val replyId: Long,
         val replyContent: String,
         val replyTime: LocalDateTime,
         val lastEditTime: LocalDateTime,

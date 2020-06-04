@@ -8,8 +8,8 @@ import com.young_zy.forum.repo.ThreadNativeRepository
 import com.young_zy.forum.service.exception.AuthException
 import com.young_zy.forum.service.exception.NotAcceptableException
 import com.young_zy.forum.service.exception.NotFoundException
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.toList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
@@ -57,10 +57,10 @@ class SectionService {
     }
 
     @Throws(AuthException::class)
-    suspend fun getSectionList(token: String): Flow<SectionEntity> {
+    suspend fun getSectionList(token: String): List<SectionEntity> {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
-        return sectionNativeRepository.findAll()
+        return sectionNativeRepository.findAll().toList()
     }
 
     @Throws(AuthException::class, NotAcceptableException::class)

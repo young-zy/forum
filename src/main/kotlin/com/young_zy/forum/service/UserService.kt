@@ -192,7 +192,7 @@ class UserService {
      * @throws AuthException when operator's auth is not enough
      */
     @Throws(NotFoundException::class, AuthException::class)
-    suspend fun giveSectionAdmin(token: String, userIds: List<Long>, sectionIds: List<Int>) {
+    suspend fun giveSectionAdmin(token: String, userIds: List<Long>, sectionIds: List<Long>) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
         transactionalOperator.executeAndAwait {
@@ -222,7 +222,7 @@ class UserService {
      * @throws AuthException when operator's auth is not enough
      */
     @Throws(NotFoundException::class, AuthException::class)
-    suspend fun revokeSectionAdmin(token: String, userIds: List<Long>, sectionIds: List<Int>) {
+    suspend fun revokeSectionAdmin(token: String, userIds: List<Long>, sectionIds: List<Long>) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
         transactionalOperator.executeAndAwait {

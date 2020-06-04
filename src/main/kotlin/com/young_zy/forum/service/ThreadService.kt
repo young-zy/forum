@@ -59,7 +59,7 @@ class ThreadService {
      * @throws AuthException when user's auth is not enough
      */
     @Throws(NotFoundException::class, AuthException::class)
-    suspend fun getThread(token: String, threadId: Int, page: Int = 1, size: Int = 10): ThreadObject {
+    suspend fun getThread(token: String, threadId: Long, page: Int = 1, size: Int = 10): ThreadObject {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
         val threadProjection = threadNativeRepository.findByTid(threadId)
@@ -67,7 +67,7 @@ class ThreadService {
         val replies = mutableListOf<ReplyObject>()
         replyNativeRepository.findAllByTid(threadId, page, size).collect { replies.add(it) }
         if (tokenObj != null) {
-            hitRateService.increment(tokenObj.uid, threadId)
+            hitRateService.increment(tokenObj.uid, threadProjection.tid)
         }
         return ThreadObject(
                 threadProjection,
@@ -88,7 +88,7 @@ class ThreadService {
      * @throws NotFoundException when section not found
      */
     @Throws(AuthException::class, NotFoundException::class)
-    suspend fun postThread(token: String?, sectionId: Int, title: String, content: String, isQuestion: Boolean) {
+    suspend fun postThread(token: String?, sectionId: Long, title: String, content: String, isQuestion: Boolean) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
         transactionalOperator.executeAndAwait {
@@ -111,7 +111,7 @@ class ThreadService {
      * @throws NotFoundException when section not found
      */
     @Throws(AuthException::class, NotFoundException::class)
-    suspend fun postReply(token: String, threadId: Int, replyContent: String) {
+    suspend fun postReply(token: String, threadId: Long, replyContent: String) {
         val tokenObj = loginService.getToken(token)
         transactionalOperator.executeAndAwait {
             if (!threadNativeRepository.existsById(threadId)) {
@@ -132,7 +132,7 @@ class ThreadService {
      *  @throws AuthException when operator's auth is not enough
      */
     @Throws(AuthException::class, NotFoundException::class)
-    suspend fun deleteThread(token: String, threadId: Int) {
+    suspend fun deleteThread(token: String, threadId: Long) {
         val tokenObj = loginService.getToken(token)
         transactionalOperator.executeAndAwait {
             val thread = threadNativeRepository.findThreadEntityByTid(threadId)
@@ -158,7 +158,7 @@ class ThreadService {
      * @throws AuthException when operator's auth is not enough
      */
     @Throws(NotFoundException::class, AuthException::class)
-    suspend fun updateReply(token: String, replyId: Int, replyContent: String) {
+    suspend fun updateReply(token: String, replyId: Long, replyContent: String) {
         val tokenObj = loginService.getToken(token)
         transactionalOperator.executeAndAwait {
             val replyEntity: ReplyEntity = replyNativeRepository.findReplyEntityByRid(replyId)
@@ -181,7 +181,7 @@ class ThreadService {
      * @throws AuthException when operator's auth is not enough
      */
     @Throws(NotFoundException::class, AuthException::class)
-    suspend fun deleteReply(token: String, replyId: Int) {
+    suspend fun deleteReply(token: String, replyId: Long) {
         val tokenObj = loginService.getToken(token)
         transactionalOperator.executeAndAwait {
             val replyEntity = replyNativeRepository.findReplyEntityByRid(replyId)
@@ -206,7 +206,7 @@ class ThreadService {
      * @param state state tobe set to the reply
      */
     @Throws(AuthException::class, NotFoundException::class, NotAcceptableException::class)
-    suspend fun vote(token: String, rid: Int, state: Int) {
+    suspend fun vote(token: String, rid: Long, state: Long) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
         transactionalOperator.executeAndAwait {
@@ -228,7 +228,7 @@ class ThreadService {
                 } else {
                     if (state > 0) {
                         reply.upVote++
-                    } else if (state == 0) {
+                    } else if (state == 0.toLong()) {
                         if (voteEntity.vote > 0) {
                             reply.upVote--
                         } else {

@@ -7,7 +7,7 @@ class ThreadObject(thread: ThreadProjection,
                    var replies: List<ReplyObject>,
                    var currentPage: Int,
                    var totalPage: Int) {
-    val threadId: Int = thread.tid
+    val threadId: Long = thread.tid
     val title: String = thread.title
     val lastReplyTime: LocalDateTime = thread.lastReplyTime
     val postTime: LocalDateTime = thread.postTime

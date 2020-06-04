@@ -21,8 +21,8 @@ class HitRateRedisConfig(@Autowired val hitRateRedisProperties: HitRateRedisProp
     }
 
     @Bean
-    fun hitRateRedisTemplate(): RedisTemplate<String, Int>? {
-        val template = RedisTemplate<String, Int>()
+    fun hitRateRedisTemplate(): RedisTemplate<String, Long>? {
+        val template = RedisTemplate<String, Long>()
         template.setConnectionFactory(hitRateRedisConnectionFactory())
         template.setEnableTransactionSupport(true)
         val stringRedisSerializer = StringRedisSerializer()

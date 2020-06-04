@@ -16,7 +16,6 @@ import org.springframework.data.r2dbc.core.awaitOneOrNull
 import org.springframework.data.r2dbc.core.awaitRowsUpdated
 import org.springframework.data.relational.core.query.Criteria.where
 import org.springframework.stereotype.Repository
-import java.math.BigInteger
 import java.time.LocalDateTime
 
 @Repository
@@ -37,7 +36,7 @@ class ThreadNativeRepository {
                 .bind("sid", sid)
                 .map { t ->
                     ThreadInListProjection(
-                            t["tid"] as Int,
+                            t["tid"] as Long,
                             t["title"] as String,
                             t["lastReplyTime"] as LocalDateTime,
                             t["postTime"] as LocalDateTime,
@@ -51,12 +50,12 @@ class ThreadNativeRepository {
                 .asFlow()
     }
 
-    suspend fun findByTid(tid: Int): ThreadProjection? {
+    suspend fun findByTid(tid: Long): ThreadProjection? {
         return r2dbcDatabaseClient.execute("select tid, title, lastReplyTime, postTime, question, hasBestAnswer, u.uid , u.username from thread left join user u on thread.uid = u.uid where tid=:tid")
                 .bind("tid", tid)
                 .map { t ->
                     ThreadProjection(
-                            (t["tid"] as BigInteger).toInt(),
+                            t["tid"] as Long,
                             t["title"] as String,
                             t["lastReplyTime"] as LocalDateTime,
                             t["postTime"] as LocalDateTime,
@@ -88,7 +87,7 @@ class ThreadNativeRepository {
                 .all()
                 .map { t ->
                     SearchResultDTO(
-                            t["tid"] as BigInteger,
+                            t["tid"] as Long,
                             t["title"] as String,
                             t["lastReplyTime"] as LocalDateTime,
                             t["postTime"] as LocalDateTime,
@@ -101,7 +100,7 @@ class ThreadNativeRepository {
                 .asFlow()
     }
 
-    suspend fun findThreadEntityByTid(tid: Int): ThreadEntity? {
+    suspend fun findThreadEntityByTid(tid: Long): ThreadEntity? {
         return r2dbcDatabaseClient.select()
                 .from(ThreadEntity::class.java)
                 .matching(where("tid").`is`(tid))
@@ -109,18 +108,18 @@ class ThreadNativeRepository {
                 .awaitOneOrNull()
     }
 
-    suspend fun insert(thread: ThreadEntity): Int {
+    suspend fun insert(thread: ThreadEntity): Long {
         return r2dbcDatabaseClient.insert()
                 .into(ThreadEntity::class.java)
                 .using(thread)
                 .map { t ->
-                    t["tid"] as Int
+                    t["tid"] as Long
                 }
                 .one()
                 .awaitSingle()
     }
 
-    suspend fun existsById(threadId: Int): Boolean {
+    suspend fun existsById(threadId: Long): Boolean {
         return r2dbcDatabaseClient.execute("select count(*) as count from thread where tid = :tid")
                 .bind("tid", threadId)
                 .map { t ->

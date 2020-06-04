@@ -13,12 +13,12 @@ import java.util.concurrent.TimeUnit
 @Service
 class HitRateService {
     @Autowired
-    private lateinit var hitRateRedisTemplate: RedisTemplate<String, Int>
+    private lateinit var hitRateRedisTemplate: RedisTemplate<String, Long>
 
     @Autowired
     private lateinit var threadNativeRepository: ThreadNativeRepository
 
-    fun increment(uid: Long, tid: Int) {
+    fun increment(uid: Long, tid: Long) {
         if (check(uid, tid)) {
             if (hitRateRedisTemplate.hasKey("order")) {
                 val current = LocalDateTime.now()
@@ -33,7 +33,7 @@ class HitRateService {
         }
     }
 
-    private fun check(uid: Long, tid: Int): Boolean {
+    private fun check(uid: Long, tid: Long): Boolean {
         return if (hitRateRedisTemplate.opsForValue().get("$uid:$tid") === null) {
             hitRateRedisTemplate.opsForValue().set("$uid:$tid", 1, Duration.ofHours(12))
             true

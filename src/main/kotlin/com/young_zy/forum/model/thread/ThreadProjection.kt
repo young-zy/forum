@@ -4,7 +4,7 @@ import com.young_zy.forum.model.user.SimpleUserObject
 import java.time.LocalDateTime
 
 class ThreadProjection(
-        var tid: Int,
+        var tid: Long,
         var title: String,
         var lastReplyTime: LocalDateTime,
         var postTime: LocalDateTime,

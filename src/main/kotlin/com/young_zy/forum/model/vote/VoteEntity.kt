@@ -7,7 +7,7 @@ data class VoteEntity(
         @Column("uid")
         var uid: Long,
         @Column("rid")
-        var rid: Int,
+        var rid: Long,
         @Column("vote")
-        var vote: Int
+        var vote: Long
 )

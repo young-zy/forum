@@ -9,7 +9,7 @@ import org.springframework.data.relational.core.mapping.Table
 data class SectionEntity(
         @Id
         @Column("sid")
-        var sid: Int = 0,
+        var sid: Long = 0,
         @Column("section_name")
         var sectionName: String? = null
 )

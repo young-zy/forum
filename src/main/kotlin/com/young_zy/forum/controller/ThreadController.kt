@@ -33,7 +33,7 @@ class ThreadController {
 
     @PostMapping("/thread/{threadId}/reply")
     suspend fun postReply(@RequestHeader headers: Map<String, String>,
-                          @PathVariable threadId: Int,
+                          @PathVariable threadId: Long,
                           @RequestBody replyRequest: ReplyRequest): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
@@ -98,7 +98,7 @@ class ThreadController {
     @GetMapping("/thread/{threadId}")
     suspend fun getThread(
             @RequestHeader headers: Map<String, String>,
-            @PathVariable("threadId") threadId: Int,
+            @PathVariable("threadId") threadId: Long,
             @RequestParam("page") page: Int?,
             @RequestParam("size") size: Int?
     ): ResponseEntity<*> {
@@ -130,13 +130,13 @@ class ThreadController {
     }
 
     @PutMapping("/reply/{replyId}/vote")
-    suspend fun updateVote(@PathVariable replyId: String, @RequestHeader headers: Map<String, String>, @RequestParam state: Int): ResponseEntity<Response> {
+    suspend fun updateVote(@PathVariable replyId: Long, @RequestHeader headers: Map<String, String>, @RequestParam state: Long): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
         try {
             rateLimitService.buildHeader(headers, responseHeaders)
-            threadService.vote(headers["token"] ?: "", replyId.toInt(), state)
+            threadService.vote(headers["token"] ?: "", replyId, state)
         } catch (e: RateLimitExceededException) {
             status = HttpStatus.TOO_MANY_REQUESTS
             responseBody = Response(false, e.message)
@@ -158,7 +158,7 @@ class ThreadController {
     }
 
     @PutMapping("/reply/{replyId}")
-    suspend fun updateReply(@PathVariable replyId: Int,
+    suspend fun updateReply(@PathVariable replyId: Long,
                             @RequestHeader headers: Map<String, String>,
                             @RequestBody requestBody: ReplyRequest): ResponseEntity<Response> {
         var responseBody: Response? = null
@@ -188,7 +188,7 @@ class ThreadController {
     }
 
     @DeleteMapping("/reply/{replyId}")
-    suspend fun deleteReply(@PathVariable replyId: Int, @RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
+    suspend fun deleteReply(@PathVariable replyId: Long, @RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
@@ -216,7 +216,7 @@ class ThreadController {
     }
 
     @DeleteMapping("/thread/{threadId}")
-    suspend fun deleteThread(@PathVariable threadId: Int, @RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
+    suspend fun deleteThread(@PathVariable threadId: Long, @RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()

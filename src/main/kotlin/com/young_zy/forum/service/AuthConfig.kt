@@ -14,7 +14,7 @@ data class AuthConfig(
         var allowAuthor: Boolean = false,
         var allowOnlyAuthor: Boolean = false,
         var authorUid: Long = -1,
-        var sectionId: Int = -1
+        var sectionId: Long = -1
 )
 
 

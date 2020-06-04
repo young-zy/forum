@@ -31,7 +31,7 @@ class SectionNativeRepository {
                 .awaitOne()
     }
 
-    suspend fun existsById(sid: Int): Boolean {
+    suspend fun existsById(sid: Long): Boolean {
         return r2dbcDatabaseClient.execute("select count(*) as count from section where sid=:sid")
                 .bind("sid", sid)
                 .map { t -> t["count"] as Long > 0 }

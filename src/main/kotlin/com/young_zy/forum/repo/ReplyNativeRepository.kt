@@ -15,7 +15,6 @@ import org.springframework.data.r2dbc.core.awaitRowsUpdated
 import org.springframework.data.relational.core.query.Criteria.where
 import org.springframework.stereotype.Repository
 import java.math.BigDecimal
-import java.math.BigInteger
 import java.time.LocalDateTime
 
 @Repository
@@ -23,7 +22,7 @@ class ReplyNativeRepository {
     @Autowired
     private lateinit var r2dbcDatabaseClient: DatabaseClient
 
-    suspend fun countByTid(tid: Int): Long {
+    suspend fun countByTid(tid: Long): Long {
         return r2dbcDatabaseClient.execute("select count(*) as count from reply where tid = :tid")
                 .bind("tid", tid)
                 .map { t -> t["count"] as Long }
@@ -33,7 +32,7 @@ class ReplyNativeRepository {
 
     fun mapReplyObject(t: Row): ReplyObject {
         return ReplyObject(
-                (t["rid"] as BigInteger).toInt(),
+                t["rid"] as Long,
                 t["replyContent"] as String,
                 t["replyTime"] as LocalDateTime,
                 t["lastEditTime"] as LocalDateTime,
@@ -47,7 +46,7 @@ class ReplyNativeRepository {
     }
 
     //select * from (select rid, replyContent, replyTime, lastEditTime, priority, isBestAnswer, upVote, downVote, uid, username from reply natural join user where tid=48) as reply left join (select rid,vote from vote where uid=1)as vote on reply.rid=vote.rid
-    suspend fun findAllByTid(tid: Int, page: Int, size: Int): Flow<ReplyObject> {
+    suspend fun findAllByTid(tid: Long, page: Int, size: Int): Flow<ReplyObject> {
 //        return r2dbcDatabaseClient.select().from(ReplyEntity::class.java)
 //                .matching(where("tid").`is`(tid))
 //                .page(PageRequest.of(page, size))
@@ -66,7 +65,7 @@ class ReplyNativeRepository {
                 .asFlow()
     }
 
-    suspend fun findReplyEntityByRid(rid: Int): ReplyEntity? {
+    suspend fun findReplyEntityByRid(rid: Long): ReplyEntity? {
         return r2dbcDatabaseClient.select()
                 .from(ReplyEntity::class.java)
                 .matching(where("rid").`is`(rid))
@@ -113,7 +112,7 @@ class ReplyNativeRepository {
                 .awaitFirstOrNull()
     }
 
-    suspend fun deleteAllByTid(tid: Int): Int {
+    suspend fun deleteAllByTid(tid: Long): Int {
         return r2dbcDatabaseClient.delete()
                 .from(ReplyEntity::class.java)
                 .matching(where("tid").`is`(tid))

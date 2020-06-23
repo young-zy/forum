@@ -71,7 +71,7 @@ class UserNativeRepository {
                             t["uid"] as Long,
                             t["username"] as String,
                             t["email"] as String,
-                            UserAuth(t["auth"] as String),
+                            UserAuth.build(t["auth"] as String),
                             t["regDate"] as LocalDate
                     )
                 }

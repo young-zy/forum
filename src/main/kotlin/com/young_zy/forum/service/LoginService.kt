@@ -4,6 +4,7 @@ import com.young_zy.forum.model.Token
 import com.young_zy.forum.model.user.UserAuth
 import com.young_zy.forum.model.user.UserEntity
 import com.young_zy.forum.service.exception.NotAcceptableException
+import com.young_zy.forum.service.exception.UnauthorizedException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
@@ -74,7 +75,7 @@ class LoginService {
     @Throws(NotAcceptableException::class)
     suspend fun login(username: String, password: String): String {
         val user: UserEntity = userService.getUser(username)
-                ?: throw NotAcceptableException("username $username does not exist")
+                ?: throw UnauthorizedException("username $username does not exist")
         return if (PasswordHash.validatePassword(password, user.hashedPassword)) {
             val random = SecureRandom()
             val bytes = ByteArray(20)
@@ -89,7 +90,7 @@ class LoginService {
             tokenRedisTemplate.opsForValue().set(token.token, token, 1, TimeUnit.DAYS)
             token.token
         } else {
-            throw NotAcceptableException("Password Incorrect")
+            throw UnauthorizedException("Password Incorrect")
         }
     }
 

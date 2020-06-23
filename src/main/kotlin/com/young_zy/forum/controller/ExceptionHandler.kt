@@ -1,12 +1,10 @@
 package com.young_zy.forum.controller
 
 import com.young_zy.forum.controller.response.Response
-import com.young_zy.forum.service.exception.AuthException
-import com.young_zy.forum.service.exception.NotAcceptableException
-import com.young_zy.forum.service.exception.NotFoundException
-import com.young_zy.forum.service.exception.RateLimitExceededException
+import com.young_zy.forum.service.exception.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -73,6 +71,16 @@ class ExceptionHandler {
                                 e.localizedMessage
                         )
                 )
+    }
+
+    @ExceptionHandler(UnauthorizedException::class)
+    fun handleUnauthorizedException(e: UnauthorizedException): ResponseEntity<Any> {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                Response(
+                        false,
+                        e.message
+                )
+        )
     }
 
     @ExceptionHandler(Exception::class)

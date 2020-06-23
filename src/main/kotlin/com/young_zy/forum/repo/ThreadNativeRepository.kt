@@ -35,7 +35,7 @@ class ThreadNativeRepository {
                             t["uid"] as Long,
                             t["username"] as String,
                             (t["question"] as Byte).toBoolean(),
-                            t["hasBestAnswer"] as Boolean
+                            (t["hasBestAnswer"] as Byte).toBoolean()
                     )
                 }
                 .all()
@@ -105,7 +105,7 @@ class ThreadNativeRepository {
                 .into(ThreadEntity::class.java)
                 .using(thread)
                 .map { t ->
-                    t["tid"] as Long
+                    t["LAST_INSERT_ID"] as Long
                 }
                 .one()
                 .awaitSingle()
@@ -118,6 +118,14 @@ class ThreadNativeRepository {
                     t["count"] as Int > 0
                 }
                 .awaitOne()
+    }
+
+    suspend fun update(thread: ThreadEntity): Void? {
+        return r2dbcDatabaseClient.update()
+                .table(ThreadEntity::class.java)
+                .using(thread)
+                .then()
+                .awaitFirstOrNull()
     }
 
     suspend fun delete(thread: ThreadEntity): Int {

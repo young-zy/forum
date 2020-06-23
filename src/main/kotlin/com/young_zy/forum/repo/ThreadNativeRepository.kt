@@ -23,15 +23,7 @@ class ThreadNativeRepository {
     @Autowired
     private lateinit var r2dbcDatabaseClient: DatabaseClient
 
-    suspend fun findAllBySid(sid: Int, page: Int, size: Int): Flow<ThreadInListProjection> {
-//        return r2dbcDatabaseClient.select()
-//                .from("thread")
-//                .orderBy(Sort.by("lastReplyTime").descending())
-//                .page(PageRequest.of(page, size))
-//                .`as`(ThreadInListProjection::class.java)
-//                .fetch()
-//                .all()
-//                .asFlow()
+    suspend fun findAllBySid(sid: Long, page: Int, size: Int): Flow<ThreadInListProjection> {
         return r2dbcDatabaseClient.execute("select tid, title, lastReplyTime, hasBestAnswer, postTime, question, uid, username from thread natural join user where sid=:sid")
                 .bind("sid", sid)
                 .map { t ->

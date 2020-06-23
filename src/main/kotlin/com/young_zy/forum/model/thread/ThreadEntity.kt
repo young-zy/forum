@@ -26,11 +26,4 @@ data class ThreadEntity(
         var postTime: LocalDateTime = LocalDateTime.now(),
         @Column("question")
         var question: Boolean
-//        ,
-//        @ManyToOne
-//        @JoinColumn(name = "uid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
-//        var author: UserEntity? = null,
-//        @ManyToOne
-//        @JoinColumn(name = "lastReplyUid", referencedColumnName = "uid", nullable = false, insertable = false, updatable = false)
-//        var userByLastReplyUid: UserEntity? = null
 )

@@ -5,24 +5,14 @@ plugins {
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
     kotlin("jvm") version "1.3.72"
     kotlin("plugin.spring") version "1.3.72"
-//    kotlin("plugin.jpa") version "1.3.72"
     kotlin("kapt") version "1.3.72"
 }
 
-//noArg {
-//    invokeInitializers = true
-//    annotation("org.springframework.data.redis.core.RedisHash")
-//}
-
 group = "com.young_zy"
-version = "0.0.1-SNAPSHOT"
+version = "1.0.1-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_11
-
-//val developmentOnly: Configuration by configurations.creating
 configurations {
-//    runtimeClasspath {
-//        extendsFrom(developmentOnly)
-//    }
+
     compileOnly {
         extendsFrom(configurations.annotationProcessor.get())
     }
@@ -34,13 +24,9 @@ repositories {
 }
 
 dependencies {
-//    implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
-//    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
-//    implementation("org.springframework.boot:spring-boot-starter-data-rest")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
-//    implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")

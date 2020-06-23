@@ -209,9 +209,6 @@ class ThreadService {
         transactionalOperator.executeAndAwait {
             val reply = replyNativeRepository.findReplyEntityByRid(rid)
                     ?: throw NotFoundException("reply $rid not found")
-//        if (!(reply?.threadByTid?.question ?: throw NotFoundException("reply $rid not found"))) {
-//            throw NotAcceptableException("reply $rid is not in a thread that is a question")
-//        }
             var voteEntity = voteNativeRepository.findVoteEntityByUidAndRid(tokenObj!!.uid, rid)
             if (voteEntity !== null) {
                 if (voteEntity.vote > 0 && state < 0) {

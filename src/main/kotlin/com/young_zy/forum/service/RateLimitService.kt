@@ -20,7 +20,7 @@ class RateLimitService {
      * @author young-zy
      */
     fun buildHeader(requestHeaders: Map<String, String>, responseHeaders: HttpHeaders) {
-        val rateLimit = hasReserve(requestHeaders["x-real-ip"]
+        val rateLimit = hasReserve(requestHeaders["X-Real-IP"]
                 ?: throw Exception("X-Real-IP in header not found.If you are maintainer, please check balance loader settings"))
         responseHeaders.add("X-RateLimit-Limit", "500")
         responseHeaders.add("X-RateLimit-Remaining", rateLimit.timesRemain.toString())

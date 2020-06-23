@@ -84,14 +84,14 @@ class ReplyNativeRepository {
                 .awaitFirst()
     }
 
-    suspend fun insert(replyEntity: ReplyEntity): Int {
+    suspend fun insert(replyEntity: ReplyEntity): Long {
         return r2dbcDatabaseClient.insert()
                 .into(ReplyEntity::class.java)
                 .using(replyEntity)
                 .fetch()
                 .one()
                 .map { t ->
-                    t["rid"] as Int
+                    t["LAST_INSERT_ID"] as Long
                 }
                 .awaitFirst()
     }

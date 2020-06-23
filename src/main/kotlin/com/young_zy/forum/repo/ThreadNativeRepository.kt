@@ -61,7 +61,7 @@ class ThreadNativeRepository {
                 .awaitFirstOrNull()
     }
 
-    suspend fun countBySid(sid: Int): Long {
+    suspend fun countBySid(sid: Long): Long {
         return r2dbcDatabaseClient.execute("select count(*) as count from thread where sid=:sid")
                 .bind("sid", sid)
                 .map { t ->

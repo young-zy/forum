@@ -10,14 +10,20 @@ data class UserAuth(
         var blocked: Boolean = false
 ) {
     constructor(userAuth: String) : this() {
-        val gson = Gson()
-        val userAuthTemp = gson.fromJson(userAuth, UserAuth::class.java)
-        UserAuth(
-                userAuthTemp.systemAdmin,
-                userAuthTemp.sectionAdmin,
-                userAuthTemp.sections,
-                userAuthTemp.user,
-                userAuthTemp.blocked
-        )
+        UserAuth.build(userAuth)
+    }
+
+    companion object {
+        fun build(userAuth: String): UserAuth {
+            val gson = Gson()
+            val userAuthTemp = gson.fromJson(userAuth, UserAuth::class.java)
+            return UserAuth(
+                    userAuthTemp.systemAdmin,
+                    userAuthTemp.sectionAdmin,
+                    userAuthTemp.sections,
+                    userAuthTemp.user,
+                    userAuthTemp.blocked
+            )
+        }
     }
 }

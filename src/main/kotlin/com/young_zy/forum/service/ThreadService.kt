@@ -253,8 +253,34 @@ class ThreadService {
                 ?: throw NotFoundException("reply of rid $replyId not found")
     }
 
+    /**
+     *  search the keyword among all the thread titles
+     *  @author young-zy
+     *  @param token token of user
+     *  @param keyWord keyword about to be searched
+     *  @param page pageof the result
+     */
     @Throws(AuthException::class)
     suspend fun search(token: String, keyWord: String, page: Int, size: Int): List<SearchResultDTO> {
         return threadNativeRepository.searchInTitle(keyWord, page, size).toList()
+    }
+
+    @Throws(NotFoundException::class, AuthException::class)
+    suspend fun setBestAnswer(token: String, threadId: Long, replyId: Long) {
+        val tokenObj = loginService.getToken(token)
+        transactionalOperator.executeAndAwait {
+            val thread = threadNativeRepository.findThreadEntityByTid(threadId)
+                    ?: throw NotFoundException("thread with threadId $threadId not found")
+            val reply = replyNativeRepository.findReplyEntityByRid(replyId)
+                    ?: throw NotFoundException("reply with replyId $replyId not found")
+            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER, allowAuthor = true, allowOnlyAuthor = true, authorUid = thread.uid, sectionId = thread.sid))
+            if (thread.hasBestAnswer) {
+                throw NotAcceptableException("thread with threadId $threadId already has best answer")
+            }
+            thread.hasBestAnswer = true
+            reply.bestAnswer = true
+            threadNativeRepository.update(thread)
+            replyNativeRepository.update(reply)
+        }
     }
 }

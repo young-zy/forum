@@ -7,6 +7,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.r2dbc.core.DatabaseClient
 import org.springframework.data.r2dbc.core.awaitOne
+import org.springframework.data.r2dbc.core.awaitOneOrNull
 import org.springframework.data.r2dbc.core.awaitRowsUpdated
 import org.springframework.data.relational.core.query.Criteria.where
 import org.springframework.stereotype.Repository
@@ -16,18 +17,18 @@ class SectionNativeRepository {
     @Autowired
     private lateinit var r2dbcDatabaseClient: DatabaseClient
 
-    suspend fun findSectionEntityBySid(sid: Int): SectionEntity? {
+    suspend fun findSectionEntityBySid(sid: Long): SectionEntity? {
         return r2dbcDatabaseClient.select()
                 .from(SectionEntity::class.java)
                 .matching(where("sid").`is`(sid))
                 .fetch()
-                .awaitOne()
+                .awaitOneOrNull()
     }
 
     suspend fun existsBySectionName(sectionName: String): Boolean {
         return r2dbcDatabaseClient.execute("select count(*) from section where section_name=:sectionName")
                 .bind("sectionName", sectionName)
-                .map { t -> t["count"] as Int > 0 }
+                .map { t -> t["count"] as Long > 0 }
                 .awaitOne()
     }
 

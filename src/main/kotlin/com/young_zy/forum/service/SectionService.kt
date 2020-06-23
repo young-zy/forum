@@ -39,7 +39,7 @@ class SectionService {
     }
 
     @Throws(AuthException::class, NotFoundException::class)
-    suspend fun getSection(token: String, sectionId: Int, page: Int = 1, size: Int = 10): SectionObject {
+    suspend fun getSection(token: String, sectionId: Long, page: Int = 1, size: Int = 10): SectionObject {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
         val sectionEntity = sectionNativeRepository.findSectionEntityBySid(sectionId)
@@ -77,7 +77,7 @@ class SectionService {
     }
 
     @Throws(AuthException::class, NotFoundException::class)
-    suspend fun deleteSection(token: String, sectionId: Int) {
+    suspend fun deleteSection(token: String, sectionId: Long) {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN))
         transactionOperator.executeAndAwait {

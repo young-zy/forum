@@ -20,6 +20,8 @@ import org.springframework.transaction.reactive.TransactionalOperator
 import org.springframework.transaction.reactive.executeAndAwait
 import java.time.LocalDateTime
 import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
 
 @Service
 class ThreadService {
@@ -211,35 +213,46 @@ class ThreadService {
                     ?: throw NotFoundException("reply $rid not found")
             var voteEntity = voteNativeRepository.findVoteEntityByUidAndRid(tokenObj!!.uid, rid)
             if (voteEntity !== null) {
-                if (voteEntity.vote > 0 && state < 0) {
+                if (voteEntity.vote > 0 && state < 0) {     // from upVote to downVote
                     reply.upVote--
                     reply.downVote++
-                } else if (voteEntity.vote < 0 && state > 0) {
+                    reply.priority -= 2
+                } else if (voteEntity.vote < 0 && state > 0) {  // from downVote to upVote
                     reply.upVote++
                     reply.downVote--
-                } else if (voteEntity.vote == state) {      //same
+                    reply.priority += 2
+                } else if (voteEntity.vote == state) {      // same
 
-                } else {
+                } else {                                    // no vote
                     if (state > 0) {
                         reply.upVote++
+                        reply.priority++
                     } else if (state == 0.toLong()) {
                         if (voteEntity.vote > 0) {
                             reply.upVote--
+                            reply.priority--
                         } else {
                             reply.downVote--
+                            reply.priority++
                         }
                     } else {
                         reply.downVote++
+                        reply.priority--
                     }
                 }
+                voteEntity.vote = state
             } else {
                 voteEntity = VoteEntity(tokenObj.uid, rid, state)
                 if (state > 0) {
                     reply.upVote++
+                    reply.priority++
                 } else if (state < 0) {
                     reply.downVote++
+                    reply.priority--
                 }
             }
+            reply.priority = max(0.0, reply.priority)
+            reply.priority = min(9999.0, reply.priority)
             replyNativeRepository.update(reply)
             voteNativeRepository.save(voteEntity)
         }

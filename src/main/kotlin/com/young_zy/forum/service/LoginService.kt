@@ -3,7 +3,6 @@ package com.young_zy.forum.service
 import com.young_zy.forum.model.Token
 import com.young_zy.forum.model.user.UserAuth
 import com.young_zy.forum.model.user.UserEntity
-import com.young_zy.forum.service.exception.NotAcceptableException
 import com.young_zy.forum.service.exception.UnauthorizedException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
@@ -70,9 +69,9 @@ class LoginService {
      * @param username username of user
      * @param password password of user
      * @return generated token of user
-     * @throws NotAcceptableException when username doesn't exist or password incorrect
+     * @throws UnauthorizedException when username doesn't exist or password incorrect
      */
-    @Throws(NotAcceptableException::class)
+    @Throws(UnauthorizedException::class)
     suspend fun login(username: String, password: String): String {
         val user: UserEntity = userService.getUser(username)
                 ?: throw UnauthorizedException("username $username does not exist")

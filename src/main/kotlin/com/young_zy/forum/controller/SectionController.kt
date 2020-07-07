@@ -25,8 +25,8 @@ class SectionController {
     @GetMapping("/section/{sectionId}")
     suspend fun getSection(@PathVariable sectionId: Long,
                            @RequestHeader headers: Map<String, String>,
-                           @RequestParam page: Int?,
-                           @RequestParam size: Int?): ResponseEntity<Response> {
+                           @RequestParam page: Long?,
+                           @RequestParam size: Long?): ResponseEntity<Response> {
         val status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
         rateLimitService.buildHeader(headers, responseHeaders)

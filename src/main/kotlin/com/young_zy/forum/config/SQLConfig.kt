@@ -12,9 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.convert.converter.Converter
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration
 import org.springframework.data.r2dbc.connectionfactory.R2dbcTransactionManager
-import org.springframework.data.r2dbc.core.DatabaseClient
+import org.springframework.data.r2dbc.convert.R2dbcCustomConversions
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
 import org.springframework.transaction.reactive.TransactionalOperator
@@ -52,21 +53,15 @@ class SQLConfig(@Autowired val sqlProperties: SQLProperties) : AbstractR2dbcConf
         return TransactionalOperator.create(transactionManager)
     }
 
-    @Bean
-    fun r2dbcDatabaseClient(
-            @Qualifier("connectionFactory")
-            connectionFactory: ConnectionFactory
-    ): DatabaseClient {
-        return DatabaseClient.create(connectionFactory)
-    }
 
     @Autowired
     private lateinit var gson: Gson
 
-    override fun getCustomConverters(): MutableList<Any> {
-        val converterList = mutableListOf<Any>()
+    @Bean
+    override fun r2dbcCustomConversions(): R2dbcCustomConversions {
+        val converterList: MutableList<Converter<out Any, out Any>> = mutableListOf()
         converterList.add(UserAuthReadConverter(gson))
         converterList.add(UserAuthWriteConverter(gson))
-        return converterList
+        return R2dbcCustomConversions(storeConversions, converterList)
     }
 }

@@ -13,6 +13,11 @@ data class UserAuth(
         UserAuth.build(userAuth)
     }
 
+    override fun toString(): String {
+        val gson = Gson()
+        return gson.toJson(this)
+    }
+
     companion object {
         fun build(userAuth: String): UserAuth {
             val gson = Gson()

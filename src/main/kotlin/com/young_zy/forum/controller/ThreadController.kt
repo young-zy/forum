@@ -274,7 +274,7 @@ class ThreadController {
 
     @GetMapping("/search")
     suspend fun search(@RequestParam keyWord: String, @RequestHeader headers: Map<String, String>,
-                       @RequestParam size: Int?, @RequestParam page: Int?): ResponseEntity<Response> {
+                       @RequestParam size: Long?, @RequestParam page: Long?): ResponseEntity<Response> {
         var responseBody: Response? = null
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()

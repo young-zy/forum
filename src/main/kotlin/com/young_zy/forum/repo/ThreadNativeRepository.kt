@@ -23,9 +23,11 @@ class ThreadNativeRepository {
     @Autowired
     private lateinit var r2dbcDatabaseClient: DatabaseClient
 
-    suspend fun findAllBySid(sid: Long, page: Int, size: Int): Flow<ThreadInListProjection> {
-        return r2dbcDatabaseClient.execute("select tid, title, lastReplyTime, hasBestAnswer, postTime, question, uid, username from thread natural join user where sid=:sid")
+    suspend fun findAllBySid(sid: Long, page: Long, size: Long): Flow<ThreadInListProjection> {
+        return r2dbcDatabaseClient.execute("select tid, title, lastReplyTime, hasBestAnswer, postTime, question, uid, username from thread natural join user where sid=:sid limit :offset,:amount")
                 .bind("sid", sid)
+                .bind("offset", (page - 1) * size)
+                .bind("amount", size)
                 .map { t ->
                     ThreadInListProjection(
                             t["tid"] as Long,
@@ -70,7 +72,7 @@ class ThreadNativeRepository {
                 .awaitOne()
     }
 
-    suspend fun searchInTitle(keyword: String, page: Int, amount: Int): Flow<SearchResultDTO> {
+    suspend fun searchInTitle(keyword: String, page: Long, amount: Long): Flow<SearchResultDTO> {
         return r2dbcDatabaseClient.execute("select tid,title,lastReplyTime,postTime,uid,username,question,hasBestAnswer from (select * from  thread  where  match  (title)  against  (:keyword IN NATURAL LANGUAGE MODE) ORDER BY lastReplyTime) as t natural join user limit :offset,:amount")
                 .bind("keyword", keyword)
                 .bind("offset", (page - 1) * amount)
@@ -115,7 +117,7 @@ class ThreadNativeRepository {
         return r2dbcDatabaseClient.execute("select count(*) as count from thread where tid = :tid")
                 .bind("tid", threadId)
                 .map { t ->
-                    t["count"] as Int > 0
+                    t["count"] as Long > 0
                 }
                 .awaitOne()
     }

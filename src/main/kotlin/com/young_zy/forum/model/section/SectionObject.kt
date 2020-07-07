@@ -4,7 +4,7 @@ import com.young_zy.forum.model.thread.ThreadInListProjection
 
 class SectionObject(sectionEntity: SectionEntity,
                     val threads: List<ThreadInListProjection>,
-                    val currentPage: Int,
+                    val currentPage: Long,
                     val totalPage: Int) {
     val sectionId = sectionEntity.sid
     val sectionName = sectionEntity.sectionName

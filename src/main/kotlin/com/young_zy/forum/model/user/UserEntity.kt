@@ -16,7 +16,7 @@ data class UserEntity(
         var email: String = "",
         @Column("hashedPassword")
         var hashedPassword: String = "",
-        @Column("regDate")
+        @Column("regdate")
         var regDate: LocalDate = LocalDate.MIN,
         @Column("auth")
         var auth: UserAuth = UserAuth(),

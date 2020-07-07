@@ -72,7 +72,7 @@ class UserNativeRepository {
                             t["username"] as String,
                             t["email"] as String,
                             UserAuth.build(t["auth"] as String),
-                            t["regDate"] as LocalDate
+                            t["regdate"] as LocalDate
                     )
                 }
                 .awaitOneOrNull()

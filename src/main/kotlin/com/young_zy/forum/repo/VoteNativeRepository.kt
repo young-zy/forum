@@ -4,7 +4,7 @@ import com.young_zy.forum.model.vote.VoteEntity
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.r2dbc.core.DatabaseClient
-import org.springframework.data.r2dbc.core.awaitFirst
+import org.springframework.data.r2dbc.core.awaitFirstOrNull
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -18,7 +18,7 @@ class VoteNativeRepository {
                 .bind("uid", uid)
                 .bind("rid", rid)
                 .fetch()
-                .awaitFirst()
+                .awaitFirstOrNull()
     }
 
     suspend fun save(voteEntity: VoteEntity): Void? {

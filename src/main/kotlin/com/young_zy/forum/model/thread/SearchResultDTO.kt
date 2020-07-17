@@ -13,6 +13,5 @@ class SearchResultDTO(
         var question: Boolean,
         var hasBestAnswer: Boolean
 ) {
-    var user = SimpleUserObject(uid, username)
+    var author = SimpleUserObject(uid, username)
 }
-

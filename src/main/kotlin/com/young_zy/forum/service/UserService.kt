@@ -66,6 +66,15 @@ class UserService {
         return userNativeRepository.existsByUsername(username)
     }
 
+    /**
+     * check if username already exists
+     * @param email designated email tobe queried
+     * @return true if email already exist
+     */
+    suspend fun existsEmail(email: String): Boolean {
+        return userNativeRepository.existsByEmail(email)
+    }
+
     suspend fun getDetailedUser(token: String, uid: Long?): DetailedUser {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER, allowAuthor = true))
@@ -86,19 +95,21 @@ class UserService {
         transactionalOperator.executeAndAwait {
             if (existsUsername(username)) {
                 throw NotAcceptableException("username $username already exists")
-            } else {
-                regexService.validateUsername(username)
-                regexService.validatePassword(password)
-                regexService.validateEmail(email)
-                val userAuth = UserAuth(user = true)
-                val user = UserEntity()
-                user.username = username
-                user.hashedPassword = PasswordHash.createHash(password)
-                user.auth = userAuth
-                user.regDate = LocalDate.now()
-                user.email = email
-                userNativeRepository.insert(user)
             }
+            if (existsEmail(email)) {
+                throw NotAcceptableException("email $email already exists")
+            }
+            regexService.validateUsername(username)
+            regexService.validatePassword(password)
+            regexService.validateEmail(email)
+            val userAuth = UserAuth(user = true)
+            val user = UserEntity()
+            user.username = username
+            user.hashedPassword = PasswordHash.createHash(password)
+            user.auth = userAuth
+            user.regDate = LocalDate.now()
+            user.email = email
+            userNativeRepository.insert(user)
         }
     }
 

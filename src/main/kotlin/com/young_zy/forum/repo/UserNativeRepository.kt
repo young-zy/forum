@@ -65,6 +65,15 @@ class UserNativeRepository {
                 .awaitOneOrNull() != null
     }
 
+    suspend fun existsByEmail(email: String): Boolean {
+        return r2dbcDatabaseClient
+                .select()
+                .from(UserEntity::class.java)
+                .matching(where("email").`is`(email))
+                .fetch()
+                .awaitOneOrNull() != null
+    }
+
     suspend fun insert(user: UserEntity): Void? {
         return r2dbcDatabaseClient
                 .insert()

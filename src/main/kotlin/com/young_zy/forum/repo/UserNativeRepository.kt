@@ -3,6 +3,8 @@ package com.young_zy.forum.repo
 import com.young_zy.forum.model.user.DetailedUser
 import com.young_zy.forum.model.user.UserAuth
 import com.young_zy.forum.model.user.UserEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,6 +19,23 @@ class UserNativeRepository {
 
     @Autowired
     private lateinit var r2dbcDatabaseClient: DatabaseClient
+
+    suspend fun findAllDetailedUser(page: Int, size: Int): Flow<DetailedUser> {
+        return r2dbcDatabaseClient.execute("select uid, username, email, auth, regdate from user limit :offset, :size")
+                .bind("offset", (page - 1) * size)
+                .bind("size", size)
+                .map { t ->
+                    DetailedUser(
+                            t["uid"] as Long,
+                            t["username"] as String,
+                            t["email"] as String,
+                            UserAuth.build(t["auth"] as String),
+                            t["regdate"] as LocalDate
+                    )
+                }
+                .all()
+                .asFlow()
+    }
 
     suspend fun findByUid(uid: Long): UserEntity? {
         return r2dbcDatabaseClient

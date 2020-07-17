@@ -47,7 +47,7 @@ class ReplyNativeRepository {
 
     //select * from (select rid, replyContent, replyTime, lastEditTime, priority, isBestAnswer, upVote, downVote, uid, username from reply natural join user where tid=48) as reply left join (select rid,vote from vote where uid=1)as vote on reply.rid=vote.rid
     suspend fun findAllByTid(tid: Long, uid: Long, page: Int, size: Int): Flow<ReplyObject> {
-        return r2dbcDatabaseClient.execute("select * from (select rid, replyContent, replyTime, lastEditTime, priority, isBestAnswer, upVote, downVote, uid, username from reply natural join user where tid=:tid) as reply left join (select rid,vote from vote where uid=:uid)as vote on reply.rid=vote.rid limit :offset,:size")
+        return r2dbcDatabaseClient.execute("select * from (select rid, replyContent, replyTime, lastEditTime, priority, isBestAnswer, upVote, downVote, uid, username from reply natural join user where tid=:tid) as reply left join (select rid,vote from vote where uid=:uid)as vote on reply.rid=vote.rid order by priority desc limit :offset,:size")
                 .bind("tid", tid)
                 .bind("offset", (page - 1) * size)
                 .bind("size", size)

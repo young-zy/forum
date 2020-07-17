@@ -24,7 +24,7 @@ class ThreadNativeRepository {
     private lateinit var r2dbcDatabaseClient: DatabaseClient
 
     suspend fun findAllBySid(sid: Long, page: Long, size: Long): Flow<ThreadInListProjection> {
-        return r2dbcDatabaseClient.execute("select tid, title, lastReplyTime, hasBestAnswer, postTime, question, uid, username from thread natural join user where sid=:sid limit :offset,:amount")
+        return r2dbcDatabaseClient.execute("select tid, title, lastReplyTime, hasBestAnswer, postTime, question, uid, username from thread natural join user where sid=:sid order by tid desc limit :offset,:amount")
                 .bind("sid", sid)
                 .bind("offset", (page - 1) * size)
                 .bind("amount", size)

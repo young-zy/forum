@@ -72,7 +72,7 @@ class ThreadService {
                 threadProjection,
                 replyNativeRepository.findAllByTid(threadId, page, size).toList(),
                 page,
-                ceil(replyNativeRepository.countByTid(threadId) / size.toDouble()).toInt()
+                ceil(replyNativeRepository.countByTid(threadId) / size.toDouble()).toInt().coerceAtLeast(1)
         )
     }
 

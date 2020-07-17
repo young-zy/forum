@@ -52,7 +52,7 @@ class SectionService {
                 sectionEntity,
                 threads,
                 page,
-                ceil(threadNativeRepository.countBySid(sectionId) / size.toDouble()).toInt()
+                ceil(threadNativeRepository.countBySid(sectionId) / size.toDouble()).toInt().coerceAtLeast(1)
         )
     }
 

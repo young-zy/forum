@@ -7,6 +7,7 @@ import com.young_zy.forum.repo.UserNativeRepository
 import com.young_zy.forum.service.exception.AuthException
 import com.young_zy.forum.service.exception.NotAcceptableException
 import com.young_zy.forum.service.exception.NotFoundException
+import kotlinx.coroutines.flow.toList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
@@ -41,6 +42,10 @@ class UserService {
      */
     suspend fun getUser(username: String): UserEntity? {
         return userNativeRepository.findByUsername(username)
+    }
+
+    suspend fun getAllUser(page: Int, size: Int): List<DetailedUser> {
+        return userNativeRepository.findAllDetailedUser(page, size).toList()
     }
 
     /**

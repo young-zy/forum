@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 
 class ThreadProjection(
         var tid: Long,
+        var sid: Long,
         var title: String,
         var lastReplyTime: LocalDateTime,
         var postTime: LocalDateTime,

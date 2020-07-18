@@ -8,6 +8,7 @@ class ThreadObject(thread: ThreadProjection,
                    var currentPage: Int,
                    var totalPage: Int) {
     val threadId: Long = thread.tid
+    val sectionId: Long = thread.sid
     val title: String = thread.title
     val lastReplyTime: LocalDateTime = thread.lastReplyTime
     val postTime: LocalDateTime = thread.postTime

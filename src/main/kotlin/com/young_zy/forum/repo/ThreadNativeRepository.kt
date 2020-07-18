@@ -45,11 +45,12 @@ class ThreadNativeRepository {
     }
 
     suspend fun findByTid(tid: Long): ThreadProjection? {
-        return r2dbcDatabaseClient.execute("select tid, title, lastReplyTime, postTime, question, hasBestAnswer, u.uid , u.username from thread left join user u on thread.uid = u.uid where tid=:tid")
+        return r2dbcDatabaseClient.execute("select sid, tid, title, lastReplyTime, postTime, question, hasBestAnswer, u.uid , u.username from thread left join user u on thread.uid = u.uid where tid=:tid")
                 .bind("tid", tid)
                 .map { t ->
                     ThreadProjection(
                             t["tid"] as Long,
+                            t["sid"] as Long,
                             t["title"] as String,
                             t["lastReplyTime"] as LocalDateTime,
                             t["postTime"] as LocalDateTime,

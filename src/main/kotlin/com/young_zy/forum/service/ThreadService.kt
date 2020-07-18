@@ -59,10 +59,14 @@ class ThreadService {
      * @throws NotFoundException when thread not found
      * @throws AuthException when user's auth is not enough
      */
-    @Throws(NotFoundException::class, AuthException::class)
-    suspend fun getThread(token: String, threadId: Long, page: Int = 1, size: Int = 10): ThreadObject {
+    @Throws(NotFoundException::class, AuthException::class, NotAcceptableException::class)
+    suspend fun getThread(token: String, threadId: Long, page: Int = 1, size: Int = 10, orderBy: String): ThreadObject {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
+        val orderList = setOf("postTime", "priority")
+        if (orderBy !in orderList) {
+            throw NotAcceptableException("parameter \"orderBy\" not acceptable")
+        }
         val threadProjection = threadNativeRepository.findByTid(threadId)
                 ?: throw NotFoundException("thread $threadId not found")
         if (tokenObj != null) {
@@ -70,7 +74,7 @@ class ThreadService {
         }
         return ThreadObject(
                 threadProjection,
-                replyNativeRepository.findAllByTid(threadId, page, size).toList(),
+                replyNativeRepository.findAllByTid(threadId, tokenObj?.uid ?: -1, page, size).toList(),
                 page,
                 ceil(replyNativeRepository.countByTid(threadId) / size.toDouble()).toInt().coerceAtLeast(1)
         )
@@ -233,7 +237,9 @@ class ThreadService {
                             reply.priority--
                         } else {
                             reply.downVote--
-                            reply.priority++
+                            if (reply.priority >= 0.000001) {
+                                reply.priority++
+                            }
                         }
                     } else {
                         reply.downVote++
@@ -262,7 +268,7 @@ class ThreadService {
     suspend fun getReply(token: String, replyId: Int): ReplyObject {
         val tokenObj = loginService.getToken(token)
         authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
-        return replyNativeRepository.findByRid(replyId, tokenObj!!.uid)
+        return replyNativeRepository.findByRid(replyId, tokenObj?.uid ?: -1)
                 ?: throw NotFoundException("reply of rid $replyId not found")
     }
 
@@ -274,18 +280,19 @@ class ThreadService {
      *  @param page pageof the result
      */
     @Throws(AuthException::class)
-    suspend fun search(token: String, keyWord: String, page: Int, size: Int): List<SearchResultDTO> {
+    suspend fun search(token: String, keyWord: String, page: Long, size: Long): List<SearchResultDTO> {
         return threadNativeRepository.searchInTitle(keyWord, page, size).toList()
     }
 
     @Throws(NotFoundException::class, AuthException::class)
-    suspend fun setBestAnswer(token: String, threadId: Long, replyId: Long) {
+    suspend fun setBestAnswer(token: String, replyId: Long) {
         val tokenObj = loginService.getToken(token)
         transactionalOperator.executeAndAwait {
-            val thread = threadNativeRepository.findThreadEntityByTid(threadId)
-                    ?: throw NotFoundException("thread with threadId $threadId not found")
             val reply = replyNativeRepository.findReplyEntityByRid(replyId)
                     ?: throw NotFoundException("reply with replyId $replyId not found")
+            val threadId = reply.tid
+            val thread = threadNativeRepository.findThreadEntityByTid(threadId)
+                    ?: throw NotFoundException("thread with threadId $threadId not found")
             authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER, allowAuthor = true, allowOnlyAuthor = true, authorUid = thread.uid, sectionId = thread.sid))
             if (thread.hasBestAnswer) {
                 throw NotAcceptableException("thread with threadId $threadId already has best answer")

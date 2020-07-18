@@ -68,7 +68,7 @@ class ThreadController {
             @RequestParam("size") size: Int?,
             @RequestParam("orderBy") orderBy: String?
     ): ResponseEntity<*> {
-        var responseBody: Response? = null
+        var responseBody: Response?
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
         rateLimitService.buildHeader(headers, responseHeaders)
@@ -136,7 +136,7 @@ class ThreadController {
 
     @GetMapping("/reply/{replyId}")
     suspend fun getReply(@PathVariable replyId: Int, @RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
-        var responseBody: Response? = null
+        var responseBody: Response?
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
         rateLimitService.buildHeader(headers, responseHeaders)
@@ -150,7 +150,7 @@ class ThreadController {
     @GetMapping("/search")
     suspend fun search(@RequestParam keyWord: String, @RequestHeader headers: Map<String, String>,
                        @RequestParam size: Long?, @RequestParam page: Long?): ResponseEntity<Response> {
-        var responseBody: Response? = null
+        var responseBody: Response?
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
         rateLimitService.buildHeader(headers, responseHeaders)
@@ -163,7 +163,7 @@ class ThreadController {
 
     @GetMapping("/thread/hot")
     suspend fun getHotThreads(@RequestHeader headers: Map<String, String>, @RequestParam count: Int?): ResponseEntity<Response> {
-        var responseBody: Response? = null
+        var responseBody: Response?
         var status = HttpStatus.OK
         val responseHeaders = HttpHeaders()
         rateLimitService.buildHeader(headers, responseHeaders)

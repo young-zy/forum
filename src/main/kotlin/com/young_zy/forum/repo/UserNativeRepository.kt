@@ -5,8 +5,8 @@ import com.young_zy.forum.model.user.UserAuth
 import com.young_zy.forum.model.user.UserEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.r2dbc.core.DatabaseClient
 import org.springframework.data.r2dbc.core.awaitOneOrNull
@@ -74,13 +74,16 @@ class UserNativeRepository {
                 .awaitOneOrNull() != null
     }
 
-    suspend fun insert(user: UserEntity): Void? {
+    suspend fun insert(user: UserEntity): Long {
         return r2dbcDatabaseClient
                 .insert()
                 .into(UserEntity::class.java)
                 .using(user)
-                .then()
-                .awaitFirst()
+                .map { t ->
+                    t["LAST_INSERT_ID"] as Long
+                }
+                .one()
+                .awaitSingle()
     }
 
     suspend fun update(user: UserEntity): Void? {

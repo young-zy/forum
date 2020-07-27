@@ -1,12 +1,17 @@
 package com.young_zy.forum.model.message
 
+import com.young_zy.forum.model.user.DetailedUser
+import com.young_zy.forum.model.user.SimpleUserObject
+import org.springframework.data.relational.core.mapping.Column
 import java.time.LocalDateTime
 
-data class DetailedMessage(
+class DetailedMessage(
         val messageId: Long,
-        val senderUid: Long,
-        val username: String,
-        val isRead: Boolean,
+        sender: Long,
+        username: String,
         val messageText: String,
+        val unread: Boolean,
         val sendTime: LocalDateTime
-)
+){
+    val sender = SimpleUserObject(sender, username)
+}

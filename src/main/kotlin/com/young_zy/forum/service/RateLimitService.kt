@@ -1,10 +1,11 @@
 package com.young_zy.forum.service
 
+import com.young_zy.forum.common.ReactiveContextHolder
+import com.young_zy.forum.common.exception.ForbiddenException
 import com.young_zy.forum.model.RateLimit
-import com.young_zy.forum.service.exception.RateLimitExceededException
+import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
@@ -14,21 +15,45 @@ class RateLimitService {
     @Autowired
     private lateinit var rateLimitRedisTemplate: RedisTemplate<String, RateLimit>
 
-
     /**
      * build rate limit response headers
      * @author young-zy
      */
-    fun buildHeader(requestHeaders: Map<String, String>, responseHeaders: HttpHeaders) {
-        val rateLimit = hasReserve(requestHeaders["X-Real-IP"]
-                ?: throw Exception("X-Real-IP in header not found.If you are maintainer, please check balance loader settings"))
+    suspend fun buildHeader() {
+        val requestHeaders = ReactiveContextHolder.request.map { it.headers }
+        val rateLimit = hasReserve(
+            requestHeaders.awaitSingle().getFirst("X-Real-IP")
+                ?: throw Exception("X-Real-IP in header not found.If you are maintainer, please check balance loader settings")
+        )
+        val responseHeaders = ReactiveContextHolder.response.map { it.headers }.awaitSingle()
         responseHeaders.add("X-RateLimit-Limit", "500")
         responseHeaders.add("X-RateLimit-Remaining", rateLimit.timesRemain.toString())
         responseHeaders.add("X-RateLimit-Reset", rateLimit.resetTimestamp.toString())
         if (rateLimit.timesRemain <= -1) {
-            throw RateLimitExceededException()
+            throw ForbiddenException("rate limit exceeded, please check the header ")
         }
     }
+
+//    fun buildHeader2(): Mono<Tuple2<HttpHeaders, HttpHeaders>> {
+//        val requestHeaders = ReactiveContextHolder.request.map {
+//            it.headers
+//        }
+//        val responseHeaders = ReactiveContextHolder.response.map {
+//            it.headers
+//        }
+//        return Mono.zip(requestHeaders, responseHeaders).flatMap {
+//            val rateLimit = hasReserve(it.t1.getFirst("X-Real-IP")
+//            ?: error(Exception("X-Real-IP in header not found.If you are maintainer, please check balance loader settings"))
+//            )
+//            it.t2.add("X-RateLimit-Limit", "500")
+//            it.t2.add("X-RateLimit-Remaining", rateLimit.timesRemain.toString())
+//            it.t2.add("X-RateLimit-Reset", rateLimit.resetTimestamp.toString())
+//            if (rateLimit.timesRemain <= -1) {
+//                error(RateLimitExceededException())
+//            }
+//            Mono.just(it)
+//        }
+//    }
 
     /**
      * check if user still has access rate

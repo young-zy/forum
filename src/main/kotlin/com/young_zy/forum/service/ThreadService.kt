@@ -10,10 +10,16 @@ import com.young_zy.forum.repo.ReplyNativeRepository
 import com.young_zy.forum.repo.SectionNativeRepository
 import com.young_zy.forum.repo.ThreadNativeRepository
 import com.young_zy.forum.repo.VoteNativeRepository
-import com.young_zy.forum.service.exception.AuthException
-import com.young_zy.forum.service.exception.NotAcceptableException
-import com.young_zy.forum.service.exception.NotFoundException
+import com.young_zy.forum.common.exception.ForbiddenException
+import com.young_zy.forum.common.exception.ConflictException
+import com.young_zy.forum.common.exception.NotFoundException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactive.awaitSingleOrNull
+import kotlinx.coroutines.withContext
+import org.casbin.jcasbin.main.Enforcer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.reactive.TransactionalOperator
@@ -25,6 +31,10 @@ import kotlin.math.min
 
 @Service
 class ThreadService {
+
+    @Autowired
+    private lateinit var enforcer: Enforcer
+
     @Autowired
     private lateinit var threadNativeRepository: ThreadNativeRepository
 
@@ -49,104 +59,133 @@ class ThreadService {
     @Autowired
     private lateinit var transactionalOperator: TransactionalOperator
 
+    @Autowired
+    private lateinit var tagService: TagService
+
     /**
      * get the thread of the given threadId
      *
-     * @param token token of requested user
      * @param threadId the threadId of request
      * @param page page of replies, default value is 1
      * @param size size of each page, default value is 10
      * @throws NotFoundException when thread not found
-     * @throws AuthException when user's auth is not enough
+     * @throws ForbiddenException when user's auth is not enough
      */
-    @Throws(NotFoundException::class, AuthException::class, NotAcceptableException::class)
-    suspend fun getThread(token: String, threadId: Long, page: Int = 1, size: Int = 10, orderBy: String): ThreadObject {
-        val tokenObj = loginService.getToken(token)
-        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
+    @Throws(NotFoundException::class, ForbiddenException::class, ConflictException::class)
+    suspend fun getThread(threadId: Long, page: Int = 1, size: Int = 10, orderBy: String): ThreadObject {
+        val tokenObj = loginService.getToken()
+//        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
         val orderList = setOf("postTime", "priority")
         if (orderBy !in orderList) {
-            throw NotAcceptableException("parameter \"orderBy\" not acceptable")
+            throw ConflictException("parameter \"orderBy\" not acceptable")
         }
-        val threadProjection = threadNativeRepository.findByTid(threadId)
-                ?: throw NotFoundException("thread $threadId not found")
-        if (tokenObj != null) {
-            hitRateService.increment(tokenObj.uid, threadProjection.tid)
-        }
-        return ThreadObject(
-                threadProjection,
-                replyNativeRepository.findAllByTid(threadId, tokenObj?.uid ?: -1, page, size).toList(),
+        return withContext(Dispatchers.IO) {
+            val thread = async {
+                threadNativeRepository.findByTid(threadId).awaitSingleOrNull()
+                    ?: throw NotFoundException("thread $threadId not found")
+            }
+            val replies = async {
+                replyNativeRepository.findAllByTid(threadId, tokenObj?.uid ?: -1, page, size).toList()
+            }
+            val tags = tagService.getTags(threadId)
+            if (tokenObj != null) {
+                hitRateService.increment(tokenObj.uid, threadId)
+            }
+            val t = thread.await()
+            ThreadObject(
+                t,
+                replies.await(),
                 page,
-                ceil(replyNativeRepository.countByTid(threadId) / size.toDouble()).toInt().coerceAtLeast(1)
-        )
+                ceil(replyNativeRepository.countByTid(threadId).awaitSingle() / size.toDouble()).toInt()
+                    .coerceAtLeast(1),
+                null,
+                tags.toList()
+            )
+        }
     }
 
     /**
      * post a new thread
-     * @param token token of the operator
      * @param sectionId section of the thread to be posted
      * @param title thread title
      * @param content content of the thread
      * @param isQuestion tell whether this thread is a question
-     * @throws AuthException when operator's auth is not enough
+     * @throws ForbiddenException when operator's auth is not enough
      * @throws NotFoundException when section not found
      */
-    @Throws(AuthException::class, NotFoundException::class)
-    suspend fun postThread(token: String?, sectionId: Long, title: String, content: String, isQuestion: Boolean) {
-        val tokenObj = loginService.getToken(token)
-        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
+    @Throws(ForbiddenException::class, NotFoundException::class)
+    suspend fun postThread(sectionId: Long, title: String, content: String, isQuestion: Boolean, tags: List<String>) {
+        val tokenObj = loginService.getToken()
+        if (!enforcer.enforce(tokenObj, "", "postThread")) {
+            throw ForbiddenException("permission denied")
+        }
+//        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
         transactionalOperator.executeAndAwait {
-            if (!sectionNativeRepository.existsById(sectionId)) {
+            if (!sectionNativeRepository.existsById(sectionId).awaitSingle()) {
                 throw NotFoundException("section with $sectionId not found")
             }
-            val thread = ThreadEntity(sid = sectionId, title = title, uid = tokenObj!!.uid, question = isQuestion, lastReplyUid = tokenObj.uid)
-            val tid = threadNativeRepository.insert(thread)
-            val replyEntity = ReplyEntity(tid = tid, replyContent = content, priority = 9999.9999, uid = thread.uid)
-            replyNativeRepository.insert(replyEntity)
+            var thread = ThreadEntity(
+                sid = sectionId,
+                title = title,
+                threadContent = content,
+                uid = tokenObj!!.uid,
+                question = isQuestion,
+                lastReplyUid = tokenObj.uid
+            )
+            thread = threadNativeRepository.insert(thread).awaitSingle()
+            tagService.addRelation(thread, tags)
+            //            val inserted = threadNativeRepository.insert(thread)
+//            val replyEntity = ReplyEntity(tid = inserted.awaitSingle().tid!!, replyContent = content, priority = 9999.9999, uid = thread.uid)
+//            replyNativeRepository.insert(replyEntity)
         }
     }
 
     /**
      * post a new reply to the thread
-     * @param token token of the operator
      * @param threadId section of the thread to be posted
      * @param replyContent thread title
-     * @throws AuthException when operator's auth is not enough
+     * @throws ForbiddenException when operator's auth is not enough
      * @throws NotFoundException when section not found
      */
-    @Throws(AuthException::class, NotFoundException::class)
-    suspend fun postReply(token: String, threadId: Long, replyContent: String) {
-        val tokenObj = loginService.getToken(token)
+    @Throws(ForbiddenException::class, NotFoundException::class)
+    suspend fun postReply(threadId: Long, replyContent: String) {
+        val tokenObj = loginService.getToken()
         transactionalOperator.executeAndAwait {
-            if (!threadNativeRepository.existsById(threadId)) {
-                throw NotFoundException("thread not found")
+            val thread = threadNativeRepository.findByTid(threadId).awaitSingleOrNull()
+                ?: throw NotFoundException("thread not found")
+//            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
+            if (!enforcer.enforce(tokenObj, "", "postReply")) {
+                throw ForbiddenException("permission denied")
             }
-            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
-            val replyEntity = ReplyEntity(tid = threadId, replyContent = replyContent, uid = tokenObj!!.uid)
-            replyNativeRepository.insert(replyEntity)
+            val replyEntity =
+                ReplyEntity(tid = threadId, sid = thread.sid, replyContent = replyContent, uid = tokenObj!!.uid)
+            replyNativeRepository.insert(replyEntity).awaitSingle()
         }
     }
 
     /**
      *  delete a thread and all of it's replies
      *  @author young-zy
-     *  @param token token of the operator
      *  @param threadId thread to be delete
      *  @throws NotFoundException when thread not found
-     *  @throws AuthException when operator's auth is not enough
+     *  @throws ForbiddenException when operator's auth is not enough
      */
-    @Throws(AuthException::class, NotFoundException::class)
-    suspend fun deleteThread(token: String, threadId: Long) {
-        val tokenObj = loginService.getToken(token)
+    @Throws(ForbiddenException::class, NotFoundException::class)
+    suspend fun deleteThread(threadId: Long) {
+        val tokenObj = loginService.getToken()
         transactionalOperator.executeAndAwait {
-            val thread = threadNativeRepository.findThreadEntityByTid(threadId)
-                    ?: throw NotFoundException("thread $threadId not found")
-            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SECTION_ADMIN,
-                    allowAuthor = true,
-                    allowOnlyAuthor = false,
-                    sectionId = thread.sid,
-                    authorUid = thread.uid))
+            val thread = threadNativeRepository.findThreadEntityByTid(threadId).awaitSingleOrNull()
+                ?: throw NotFoundException("thread $threadId not found")
+//            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SECTION_ADMIN,
+//                    allowAuthor = true,
+//                    allowOnlyAuthor = false,
+//                    sectionId = thread.sid,
+//                    authorUid = thread.uid))
+            if (!enforcer.enforce(tokenObj, thread, "deleteThread")) {
+                throw ForbiddenException("permission denied")
+            }
             replyNativeRepository.deleteAllByTid(threadId)
-            threadNativeRepository.delete(thread)
+            threadNativeRepository.delete(thread).awaitSingle()
         }
     }
 
@@ -154,49 +193,53 @@ class ThreadService {
     /**
      * update the content of the reply
      * @author young-zy
-     * @param token token of the operator
      * @param replyId reply id of the reply tobe updated
      * @param replyContent the content of the new reply
      * @throws NotFoundException when reply is not found
-     * @throws AuthException when operator's auth is not enough
+     * @throws ForbiddenException when operator's auth is not enough
      */
-    @Throws(NotFoundException::class, AuthException::class)
-    suspend fun updateReply(token: String, replyId: Long, replyContent: String) {
-        val tokenObj = loginService.getToken(token)
+    @Throws(NotFoundException::class, ForbiddenException::class)
+    suspend fun updateReply(replyId: Long, replyContent: String) {
+        val tokenObj = loginService.getToken()
         transactionalOperator.executeAndAwait {
-            val replyEntity: ReplyEntity = replyNativeRepository.findReplyEntityByRid(replyId)
-                    ?: throw NotFoundException("reply not found")
-            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN,
-                    allowAuthor = true,
-                    allowOnlyAuthor = true,
-                    authorUid = replyEntity.uid))
+            val replyEntity: ReplyEntity = replyNativeRepository.findReplyEntityByRid(replyId).awaitSingleOrNull()
+                ?: throw NotFoundException("reply not found")
+//            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SYSTEM_ADMIN,
+//                    allowAuthor = true,
+//                    allowOnlyAuthor = true,
+//                    authorUid = replyEntity.uid))
+            if (!enforcer.enforce(tokenObj, replyEntity, "updateReply")) {
+                throw ForbiddenException("permission denied")
+            }
             replyEntity.replyContent = replyContent
             replyEntity.lastEditTime = LocalDateTime.now()
-            replyNativeRepository.update(replyEntity)
+            replyNativeRepository.update(replyEntity).awaitSingle()
         }
     }
 
     /**
      * @author young-zy
-     * @param token token of the operator
      * @param replyId reply tobe deleted
      * @throws NotFoundException when reply not found
-     * @throws AuthException when operator's auth is not enough
+     * @throws ForbiddenException when operator's auth is not enough
      */
-    @Throws(NotFoundException::class, AuthException::class)
-    suspend fun deleteReply(token: String, replyId: Long) {
-        val tokenObj = loginService.getToken(token)
+    @Throws(NotFoundException::class, ForbiddenException::class)
+    suspend fun deleteReply(replyId: Long) {
+        val tokenObj = loginService.getToken()
         transactionalOperator.executeAndAwait {
-            val replyEntity = replyNativeRepository.findReplyEntityByRid(replyId)
-                    ?: throw NotFoundException("reply $replyId not found")
-            val threadEntity = threadNativeRepository.findThreadEntityByTid(replyEntity.tid)
-                    ?: throw NotFoundException("thread ${replyEntity.tid} not found")
-            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SECTION_ADMIN,
-                    allowAuthor = true,
-                    allowOnlyAuthor = false,
-                    authorUid = replyEntity.uid,
-                    sectionId = threadEntity.sid))
-            replyNativeRepository.delete(replyEntity)
+            val replyEntity = replyNativeRepository.findReplyEntityByRid(replyId).awaitSingleOrNull()
+                ?: throw NotFoundException("reply $replyId not found")
+            val threadEntity = threadNativeRepository.findThreadEntityByTid(replyEntity.tid).awaitSingleOrNull()
+                ?: throw NotFoundException("thread ${replyEntity.tid} not found")
+//            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.SECTION_ADMIN,
+//                    allowAuthor = true,
+//                    allowOnlyAuthor = false,
+//                    authorUid = replyEntity.uid,
+//                    sectionId = threadEntity.sid))
+            if (!enforcer.enforce(tokenObj, replyEntity, "deleteReply")) {
+                throw ForbiddenException("permission denied")
+            }
+            replyNativeRepository.delete(replyEntity).awaitSingle()
         }
     }
 
@@ -204,18 +247,20 @@ class ThreadService {
      * set the vote of a reply
      * if the reply is not in a question, nothing will be done
      * @author young-zy
-     * @param token token of the operator
      * @param rid reply tobe voted
      * @param state state tobe set to the reply
      */
-    @Throws(AuthException::class, NotFoundException::class, NotAcceptableException::class)
-    suspend fun vote(token: String, rid: Long, state: Long) {
-        val tokenObj = loginService.getToken(token)
-        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
+    @Throws(ForbiddenException::class, NotFoundException::class, ConflictException::class)
+    suspend fun vote(rid: Long, state: Long) {
+        val tokenObj = loginService.getToken()
+//        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER))
+        if (!enforcer.enforce(tokenObj, "", "vote")) {
+            throw ForbiddenException("permission denied")
+        }
         transactionalOperator.executeAndAwait {
-            val reply = replyNativeRepository.findReplyEntityByRid(rid)
-                    ?: throw NotFoundException("reply $rid not found")
-            var voteEntity = voteNativeRepository.findVoteEntityByUidAndRid(tokenObj!!.uid, rid)
+            val reply = replyNativeRepository.findReplyEntityByRid(rid).awaitSingleOrNull()
+                ?: throw NotFoundException("reply $rid not found")
+            var voteEntity = voteNativeRepository.findVoteEntityByUidAndRid(tokenObj!!.uid, rid).awaitSingleOrNull()
             if (voteEntity !== null) {
                 if (voteEntity.vote > 0 && state < 0) {     // from upVote to downVote
                     reply.upVote--
@@ -259,48 +304,55 @@ class ThreadService {
             }
             reply.priority = max(0.0, reply.priority)
             reply.priority = min(9999.0, reply.priority)
-            replyNativeRepository.update(reply)
-            voteNativeRepository.save(voteEntity)
+            replyNativeRepository.update(reply).awaitSingle()
+            voteNativeRepository.save(voteEntity).awaitSingle()
         }
     }
 
-    @Throws(NotFoundException::class, AuthException::class)
-    suspend fun getReply(token: String, replyId: Int): ReplyObject {
-        val tokenObj = loginService.getToken(token)
-        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
-        return replyNativeRepository.findByRid(replyId, tokenObj?.uid ?: -1)
-                ?: throw NotFoundException("reply of rid $replyId not found")
+    @Throws(NotFoundException::class, ForbiddenException::class)
+    suspend fun getReply(replyId: Int): ReplyObject {
+        val tokenObj = loginService.getToken()
+//        authService.hasAuth(tokenObj, AuthConfig(AuthLevel.UN_LOGGED_IN))
+        return replyNativeRepository.findByRid(replyId, tokenObj?.uid ?: -1).awaitSingleOrNull()
+            ?: throw NotFoundException("reply of rid $replyId not found")
     }
 
     /**
      *  search the keyword among all the thread titles
      *  @author young-zy
-     *  @param token token of user
      *  @param keyWord keyword about to be searched
-     *  @param page pageof the result
+     *  @param page page of the result
      */
-    @Throws(AuthException::class)
-    suspend fun search(token: String, keyWord: String, page: Long, size: Long): List<SearchResultDTO> {
+    @Throws(ForbiddenException::class)
+    suspend fun search(keyWord: String, page: Long, size: Long): List<SearchResultDTO> {
         return threadNativeRepository.searchInTitle(keyWord, page, size).toList()
     }
 
-    @Throws(NotFoundException::class, AuthException::class)
-    suspend fun setBestAnswer(token: String, replyId: Long) {
-        val tokenObj = loginService.getToken(token)
+    @Throws(NotFoundException::class, ForbiddenException::class)
+    suspend fun setBestAnswer(replyId: Long) {
+        val tokenObj = loginService.getToken()
         transactionalOperator.executeAndAwait {
-            val reply = replyNativeRepository.findReplyEntityByRid(replyId)
-                    ?: throw NotFoundException("reply with replyId $replyId not found")
+            val reply = replyNativeRepository.findReplyEntityByRid(replyId).awaitSingleOrNull()
+                ?: throw NotFoundException("reply with replyId $replyId not found")
             val threadId = reply.tid
-            val thread = threadNativeRepository.findThreadEntityByTid(threadId)
-                    ?: throw NotFoundException("thread with threadId $threadId not found")
-            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER, allowAuthor = true, allowOnlyAuthor = true, authorUid = thread.uid, sectionId = thread.sid))
-            if (thread.hasBestAnswer) {
-                throw NotAcceptableException("thread with threadId $threadId already has best answer")
+            val thread = threadNativeRepository.findThreadEntityByTid(threadId).awaitSingleOrNull()
+                ?: throw NotFoundException("thread with threadId $threadId not found")
+//            authService.hasAuth(tokenObj, AuthConfig(AuthLevel.USER,
+//                allowAuthor = true,
+//                allowOnlyAuthor = true,
+//                authorUid = thread.uid,
+//                sectionId = thread.sid
+//            ))
+            if (!enforcer.enforce(tokenObj, thread)) {
+                throw ForbiddenException("permission denied")
             }
-            thread.hasBestAnswer = true
+            if (thread.bestAnswer != null) {
+                throw ConflictException("thread with threadId $threadId already has best answer")
+            }
             reply.bestAnswer = true
-            threadNativeRepository.update(thread)
-            replyNativeRepository.update(reply)
+            thread.bestAnswer = replyId
+            threadNativeRepository.update(thread).awaitSingle()
+            replyNativeRepository.update(reply).awaitSingle()
         }
     }
 }

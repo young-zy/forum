@@ -1,7 +1,7 @@
 package com.young_zy.forum.service
 
 import com.young_zy.forum.model.Token
-import com.young_zy.forum.service.exception.AuthException
+import com.young_zy.forum.common.exception.ForbiddenException
 import org.springframework.stereotype.Service
 
 @Service
@@ -12,20 +12,21 @@ class AuthService {
      * @author young-zy
      * @param tokenObj token object of user
      * @param config AuthConfig of the operation
-     * @throws AuthException when auth level is not enough
+     * @throws ForbiddenException when auth level is not enough
      */
-    @Throws(AuthException::class)
+    @Throws(ForbiddenException::class)
+    @Deprecated("use new JCasbin enforcer instead")
     fun hasAuth(tokenObj: Token?, config: AuthConfig) {
         if (!config.allowAuthor && !config.allowOnlyAuthor && config.authLevel == AuthLevel.UN_LOGGED_IN) {
             return      // when un logged in user(without token) is allowed to do the operation
         }
         if (tokenObj === null) {
-            throw AuthException("Not logged in")    //when operation needs log in
+            throw ForbiddenException("Not logged in")    //when operation needs log in
         }
         if (config.allowAuthor) {
             if (config.authorUid != tokenObj.uid) {       //when user is not author
                 if (config.allowOnlyAuthor) {
-                    throw AuthException("user ${tokenObj.uid} is not allowed to do the operation")
+                    throw ForbiddenException("user ${tokenObj.uid} is not allowed to do the operation")
                 }
             } else {                                      //when user is author
                 return
@@ -37,27 +38,27 @@ class AuthService {
             }
             AuthLevel.USER -> {
                 if (tokenObj.auth.blocked) {
-                    throw AuthException("user ${tokenObj.uid} is blocked, please contact admin for more info")
+                    throw ForbiddenException("user ${tokenObj.uid} is blocked, please contact admin for more info")
                 }
             }
             AuthLevel.SECTION_ADMIN -> {
                 if (tokenObj.auth.blocked) {
-                    throw AuthException("user ${tokenObj.uid} is blocked, please contact admin for more info")
+                    throw ForbiddenException("user ${tokenObj.uid} is blocked, please contact admin for more info")
                 }
                 if (tokenObj.auth.systemAdmin) {
                     return
                 } else if (tokenObj.auth.sectionAdmin && (config.sectionId in tokenObj.auth.sections)) {
                     return
                 } else {
-                    throw AuthException("user ${tokenObj.uid} is not allowed to do the operation, minimum auth is section admin of ${config.sectionId}")
+                    throw ForbiddenException("user ${tokenObj.uid} is not allowed to do the operation, minimum auth is section admin of ${config.sectionId}")
                 }
             }
             AuthLevel.SYSTEM_ADMIN -> {
                 if (tokenObj.auth.blocked) {
-                    throw AuthException("user ${tokenObj.uid} is blocked, please contact admin for more info")
+                    throw ForbiddenException("user ${tokenObj.uid} is blocked, please contact admin for more info")
                 }
                 if (!tokenObj.auth.systemAdmin) {
-                    throw AuthException("user ${tokenObj.uid} is not allowed to do the operation, minimum auth is system admin")
+                    throw ForbiddenException("user ${tokenObj.uid} is not allowed to do the operation, minimum auth is system admin")
                 }
             }
         }

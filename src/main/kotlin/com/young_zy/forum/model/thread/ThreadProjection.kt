@@ -7,10 +7,11 @@ class ThreadProjection(
         var tid: Long,
         var sid: Long,
         var title: String,
+        var threadContent: String,
         var lastReplyTime: LocalDateTime,
         var postTime: LocalDateTime,
         var question: Boolean,
-        var hasBestAnswer: Boolean,
+        var bestAnswer: Long?,
         uid: Long,
         username: String
 ) {

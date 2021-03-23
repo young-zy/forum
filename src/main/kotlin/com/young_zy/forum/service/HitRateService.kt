@@ -3,6 +3,7 @@ package com.young_zy.forum.service
 
 import com.young_zy.forum.model.thread.ThreadProjection
 import com.young_zy.forum.repo.ThreadNativeRepository
+import kotlinx.coroutines.reactive.awaitSingleOrNull
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
@@ -46,7 +47,7 @@ class HitRateService {
         val threadIds = hitRateRedisTemplate.opsForZSet().reverseRange("order", 0, count.toLong())!!
         val res = mutableListOf<ThreadProjection>()
         threadIds.forEach flag@{
-            val temp = threadNativeRepository.findByTid(it) ?: return@flag
+            val temp = threadNativeRepository.findByTid(it).awaitSingleOrNull() ?: return@flag
             res.add(temp)
         }
         return res

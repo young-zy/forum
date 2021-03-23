@@ -8,10 +8,11 @@ class ThreadInListProjection(
         var title: String,
         var lastReplyTime: LocalDateTime,
         var postTime: LocalDateTime,
+        var threadContent: String,
         uid: Long,
         username: String,
         var question: Boolean,
-        var hasBestAnswer: Boolean
+        var bestAnswer: Long?
 ) {
     var author = SimpleUserObject(uid, username)
 }

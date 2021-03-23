@@ -7,27 +7,29 @@ import java.time.LocalDateTime
 
 @Table("reply")
 data class ReplyEntity(
-        @Column("rid")
-        @Id
-        var rid: Long? = null,
-        @Column("tid")
-        var tid: Long = 0,
-        @Column("replyContent")
-        var replyContent: String = "",
-        @Column("uid")
-        var uid: Long,
-        @Column("replyTime")
-        var replyTime: LocalDateTime = LocalDateTime.now(),
-        @Column("lastEditTime")
-        var lastEditTime: LocalDateTime = LocalDateTime.now(),
-        @Column("priority")
-        var priority: Double = 0.0,
-        @Column("isBestAnswer")
-        var bestAnswer: Boolean = false,
-        @Column("upVote")
-        var upVote: Int = 0,
-        @Column("downVote")
-        var downVote: Int = 0
+    @Column("rid")
+    @Id
+    var rid: Long? = null,
+    @Column("tid")
+    var tid: Long = 0,
+    @Column("sid")
+    var sid: Long = 0,
+    @Column("replyContent")
+    var replyContent: String = "",
+    @Column("uid")
+    var uid: Long,
+    @Column("replyTime")
+    var replyTime: LocalDateTime = LocalDateTime.now(),
+    @Column("lastEditTime")
+    var lastEditTime: LocalDateTime = LocalDateTime.now(),
+    @Column("priority")
+    var priority: Double = 0.0,
+    @Column("isBestAnswer")
+    var bestAnswer: Boolean = false,
+    @Column("upVote")
+    var upVote: Int = 0,
+    @Column("downVote")
+    var downVote: Int = 0
 //        ,
 //        @JoinColumn(name = "tid", referencedColumnName = "tid", nullable = false, insertable = false, updatable = false)
 //        @ManyToOne

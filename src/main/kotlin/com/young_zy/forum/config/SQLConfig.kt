@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.convert.converter.Converter
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration
-import org.springframework.data.r2dbc.connectionfactory.R2dbcTransactionManager
+import org.springframework.r2dbc.connection.R2dbcTransactionManager
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories
 import org.springframework.transaction.annotation.EnableTransactionManagement
@@ -52,7 +52,6 @@ class SQLConfig(@Autowired val sqlProperties: SQLProperties) : AbstractR2dbcConf
     fun transactionOperator(transactionManager: R2dbcTransactionManager): TransactionalOperator {
         return TransactionalOperator.create(transactionManager)
     }
-
 
     @Autowired
     private lateinit var gson: Gson

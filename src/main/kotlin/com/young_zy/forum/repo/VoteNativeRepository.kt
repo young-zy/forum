@@ -1,32 +1,40 @@
 package com.young_zy.forum.repo
 
 import com.young_zy.forum.model.vote.VoteEntity
-import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.r2dbc.core.DatabaseClient
-import org.springframework.data.r2dbc.core.awaitFirstOrNull
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.stereotype.Repository
+import reactor.core.publisher.Mono
 
 @Repository
 class VoteNativeRepository {
-    @Autowired
-    private lateinit var r2dbcDatabaseClient: DatabaseClient
+//    @Autowired
+//    private lateinit var r2dbcDatabaseClient: DatabaseClient
 
-    suspend fun findVoteEntityByUidAndRid(uid: Long, rid: Long): VoteEntity? {
-        return r2dbcDatabaseClient.execute("select uid, rid, vote from vote where uid=:uid and rid=:rid")
-                .`as`(VoteEntity::class.java)
-                .bind("uid", uid)
-                .bind("rid", rid)
-                .fetch()
-                .awaitFirstOrNull()
+    @Autowired
+    private lateinit var r2dbcEntityTemplate: R2dbcEntityTemplate
+
+    suspend fun findVoteEntityByUidAndRid(uid: Long, rid: Long): Mono<VoteEntity> {
+        val sql = "select uid, rid, vote from vote where uid=:uid and rid=:rid"
+        return r2dbcEntityTemplate.databaseClient.sql(sql)
+            .bind("uid", uid)
+            .bind("rid", rid)
+            .map { r ->
+                VoteEntity(
+                    r["uid"] as Long,
+                    r["rid"] as Long,
+                    r["vote"] as Long
+                )
+            }
+            .one()
     }
 
-    suspend fun save(voteEntity: VoteEntity): Void? {
-        return r2dbcDatabaseClient.execute("replace into vote(uid, rid, vote) VALUES (:uid, :rid, :vote) ")
-                .bind("uid", voteEntity.uid)
-                .bind("rid", voteEntity.rid)
-                .bind("vote", voteEntity.vote)
-                .then()
-                .awaitFirstOrNull()
+    suspend fun save(voteEntity: VoteEntity): Mono<Void> {
+        val sql = "replace into vote(uid, rid, vote) VALUES (:uid, :rid, :vote)"
+        return r2dbcEntityTemplate.databaseClient.sql(sql)
+            .bind("uid", voteEntity.uid)
+            .bind("rid", voteEntity.rid)
+            .bind("vote", voteEntity.vote)
+            .then()
     }
 }

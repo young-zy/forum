@@ -1,9 +1,11 @@
 package com.young_zy.forum.service
 
+import com.young_zy.forum.common.ReactiveContextHolder
 import com.young_zy.forum.model.Token
 import com.young_zy.forum.model.user.UserAuth
 import com.young_zy.forum.model.user.UserEntity
-import com.young_zy.forum.service.exception.UnauthorizedException
+import com.young_zy.forum.common.exception.UnauthorizedException
+import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
@@ -22,11 +24,10 @@ class LoginService {
 
     /**
      * @author young-zy
-     * @param token token string
      * @return Token of the token if exists, else returns null
      */
-    fun getToken(token: String?): Token? {
-        return (tokenRedisTemplate.opsForValue().get(token ?: ""))
+    suspend fun getToken(): Token? {
+        return (tokenRedisTemplate.opsForValue().get(ReactiveContextHolder.token.awaitSingle()))
     }
 
     /**
@@ -96,9 +97,9 @@ class LoginService {
     /**
      * delete token key-value from redis to logout user
      * @author young-zy
-     * @param token token of user
      */
-    fun logout(token: String) {
+    suspend fun logout() {
+        val token = ReactiveContextHolder.token.awaitSingle()
         tokenRedisTemplate.delete(token)
     }
 

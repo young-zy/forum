@@ -16,12 +16,14 @@ data class ThreadEntity(
         var uid: Long = 0,
         @Column("title")
         var title: String = "",
+        @Column("threadContent")
+        var threadContent: String = "",
         @Column("lastReplyTime")
         var lastReplyTime: LocalDateTime = LocalDateTime.now(),
         @Column("lastReplyUid")
         var lastReplyUid: Long = 0,
-        @Column("hasBestAnswer")
-        var hasBestAnswer: Boolean = false,
+        @Column("bestAnswer")
+        var bestAnswer: Long? = null,
         @Column("postTime")
         var postTime: LocalDateTime = LocalDateTime.now(),
         @Column("question")

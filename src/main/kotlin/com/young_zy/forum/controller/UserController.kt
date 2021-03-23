@@ -1,5 +1,6 @@
 package com.young_zy.forum.controller
 
+import com.young_zy.forum.common.annotation.RateLimit
 import com.young_zy.forum.controller.request.*
 import com.young_zy.forum.controller.response.LoginResponse
 import com.young_zy.forum.controller.response.Response
@@ -9,12 +10,10 @@ import com.young_zy.forum.service.LoginService
 import com.young_zy.forum.service.RateLimitService
 import com.young_zy.forum.service.UserService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
-
+@CrossOrigin
 @RestController
 class UserController {
 
@@ -33,116 +32,79 @@ class UserController {
     }
 
     @GetMapping(path = ["/user/{userId}", "/user"])
-    suspend fun getUser(@PathVariable userId: Long?,
-                        @RequestHeader headers: Map<String, String>): ResponseEntity<*> {
-        val responseHeaders = HttpHeaders()
+    suspend fun getUser(@PathVariable userId: Long?): Response? {
         var responseStatus = HttpStatus.OK
-        var responseBody: Response? = null
-        rateLimitService.buildHeader(headers, responseHeaders)
-        responseBody = UserResponse(userService.getDetailedUser(headers["token"] ?: "", userId))
-        return ResponseEntity
-                .status(responseStatus)
-                .headers(responseHeaders)
-                .body(responseBody)
+        var responseBody: Response?
+        rateLimitService.buildHeader()
+        responseBody = UserResponse(userService.getDetailedUser(userId))
+        return responseBody
     }
 
     @PutMapping("/user")
     suspend fun userUpdate(
-            @RequestHeader headers: Map<String, String>,
-            @RequestBody body: UserUpdateRequest
-    ): ResponseEntity<*> {
-        val responseHeaders = HttpHeaders()
+        @RequestBody body: UserUpdateRequest
+    ): Response? {
         var responseStatus = HttpStatus.OK
         var responseBody: Response? = null
-        rateLimitService.buildHeader(headers, responseHeaders)
+        rateLimitService.buildHeader()
         userService.userInfoUpdate(
-                headers["token"] ?: error("token not found in header"),
-                body.password,
-                body.newPassword,
-                body.username,
-                body.email)
-        return ResponseEntity
-                .status(responseStatus)
-                .headers(responseHeaders)
-                .body(responseBody)
+            body.password,
+            body.newPassword,
+            body.username,
+            body.email
+        )
+        return responseBody
     }
 
     @PostMapping("/user/login")
-    suspend fun login(
-            @RequestHeader headers: Map<String, String>,
-            @RequestBody requestBody: LoginRequest
-    ): ResponseEntity<*> {
-        var status = HttpStatus.OK
-        val responseHeaders = HttpHeaders()
-        var responseBody: Response? = null
-        rateLimitService.buildHeader(headers, responseHeaders)
+    suspend fun login(@RequestBody requestBody: LoginRequest): Response? {
+        val responseBody: Response?
+        rateLimitService.buildHeader()
         val token = loginService.login(requestBody.username, requestBody.password)
         responseBody = LoginResponse(token)
-        return ResponseEntity
-                .status(status)
-                .headers(responseHeaders)
-                .body(responseBody)
+        return responseBody
     }
 
     @PostMapping("/user")
     suspend fun register(
-            @RequestHeader headers: Map<String, String>,
-            @RequestBody request: RegisterRequest): ResponseEntity<*> {
-        var status = HttpStatus.OK
-        val responseHeaders = HttpHeaders()
-        var responseBody: Response? = null
-        rateLimitService.buildHeader(headers, responseHeaders)
+        @RequestBody request: RegisterRequest
+    ): Response? {
+        val responseBody: Response? = null
+        rateLimitService.buildHeader()
         userService.register(request.username, request.password, request.email)
-        return ResponseEntity
-                .status(status)
-                .headers(responseHeaders)
-                .body(responseBody)
+        return responseBody
     }
 
     @PostMapping("/user/logout")
-    fun logout(
-            @RequestHeader headers: Map<String, String>
-    ): ResponseEntity<*> {
-        var status = HttpStatus.NO_CONTENT
-        val responseHeaders = HttpHeaders()
+    suspend fun logout(): Response? {
         var responseBody: Response? = null
-        rateLimitService.buildHeader(headers, responseHeaders)
-        loginService.logout(headers["token"] ?: error("token not found in header"))
-        return ResponseEntity
-                .status(status)
-                .headers(responseHeaders)
-                .body(responseBody)
+        rateLimitService.buildHeader()
+        loginService.logout()
+        return responseBody
     }
 
     @PutMapping("/user/giveSystemAdmin")
     suspend fun giveSystemAdmin(
-            @RequestHeader headers: Map<String, String>,
-            @RequestBody requestBody: GiveSystemAdminRequest
-    ): ResponseEntity<Response> {
-        var status = HttpStatus.OK
-        val responseHeaders = HttpHeaders()
+        @RequestBody requestBody: GiveSystemAdminRequest
+    ): Response? {
         var responseBody: Response? = null
-        rateLimitService.buildHeader(headers, responseHeaders)
-        userService.giveSystemAdmin(headers["token"] ?: "", requestBody.userIds)
-        return ResponseEntity
-                .status(status)
-                .headers(responseHeaders)
-                .body(responseBody)
+        rateLimitService.buildHeader()
+        userService.giveSystemAdmin(requestBody.userIds)
+        return responseBody
     }
 
     @PutMapping("/user/giveSectionAdmin")
     suspend fun giveSectionAdmin(
-            @RequestHeader headers: Map<String, String>,
-            @RequestBody requestBody: GiveSectionAdminRequest
-    ): ResponseEntity<Response> {
-        var status = HttpStatus.OK
-        val responseHeaders = HttpHeaders()
+        @RequestBody requestBody: GiveSectionAdminRequest
+    ): Response? {
         var responseBody: Response? = null
-        rateLimitService.buildHeader(headers, responseHeaders)
-        userService.giveSectionAdmin(headers["token"] ?: "", requestBody.userIds, requestBody.sectionIds)
-        return ResponseEntity
-                .status(status)
-                .headers(responseHeaders)
-                .body(responseBody)
+        rateLimitService.buildHeader()
+        userService.giveSectionAdmin(requestBody.userIds, requestBody.sectionIds)
+        return responseBody
+    }
+
+    @GetMapping("/user/{userId}/recentThreads")
+    fun getRecentThreads(@PathVariable userId: Long) {
+
     }
 }

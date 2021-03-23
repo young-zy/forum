@@ -7,13 +7,10 @@ import com.young_zy.forum.controller.response.SectionResponse
 import com.young_zy.forum.service.RateLimitService
 import com.young_zy.forum.service.SectionService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
 
-@Controller
+@CrossOrigin
+@RestController
 class SectionController {
 
     @Autowired
@@ -23,60 +20,38 @@ class SectionController {
     private lateinit var rateLimitService: RateLimitService
 
     @GetMapping("/section/{sectionId}")
-    suspend fun getSection(@PathVariable sectionId: Long,
-                           @RequestHeader headers: Map<String, String>,
-                           @RequestParam page: Long?,
-                           @RequestParam size: Long?): ResponseEntity<Response> {
-        val status = HttpStatus.OK
-        val responseHeaders = HttpHeaders()
-        rateLimitService.buildHeader(headers, responseHeaders)
+    suspend fun getSection(
+        @PathVariable sectionId: Long,
+        @RequestParam page: Long?,
+        @RequestParam size: Long?
+    ): Response? {
+        rateLimitService.buildHeader()
         val responseBody = SectionResponse(
-                sectionService.getSection(
-                        headers["token"] ?: "",
-                        sectionId, page ?: 1, size ?: 10
-                )
+            sectionService.getSection(
+                sectionId, page ?: 1, size ?: 10
+            )
         )
-        return ResponseEntity
-                .status(status)
-                .headers(responseHeaders)
-                .body(responseBody)
+        return responseBody
     }
 
     @GetMapping("/section")
-    suspend fun getSections(@RequestHeader headers: Map<String, String>): ResponseEntity<Response> {
-        val status = HttpStatus.OK
-        val responseHeaders = HttpHeaders()
-        rateLimitService.buildHeader(headers, responseHeaders)
-        val responseBody = SectionListResponse(sectionService.getSectionList(headers["token"] ?: ""))
-        return ResponseEntity
-                .status(status)
-                .headers(responseHeaders)
-                .body(responseBody)
+    suspend fun getSections(): Response? {
+        rateLimitService.buildHeader()
+        val responseBody = SectionListResponse(sectionService.getSectionList())
+        return responseBody
     }
 
     @PostMapping("/section")
-    suspend fun addSection(@RequestHeader headers: Map<String, String>, @RequestBody requestBody: AddSectionRequest): ResponseEntity<Response> {
+    suspend fun addSection(@RequestBody requestBody: AddSectionRequest): Response? {
         val responseBody: Response? = null
-        val status = HttpStatus.OK
-        val responseHeaders = HttpHeaders()
-        rateLimitService.buildHeader(headers, responseHeaders)
-        sectionService.addSection(headers["token"] ?: "", requestBody.sectionName)
-        return ResponseEntity
-                .status(status)
-                .headers(responseHeaders)
-                .body(responseBody)
+        rateLimitService.buildHeader()
+        sectionService.addSection(requestBody.sectionName)
+        return responseBody
     }
 
     @DeleteMapping("/section/{sectionId}")
-    suspend fun deleteSection(@RequestHeader headers: Map<String, String>, @PathVariable sectionId: Long): ResponseEntity<Response> {
-        val status = HttpStatus.OK
-        val responseHeaders = HttpHeaders()
-        rateLimitService.buildHeader(headers, responseHeaders)
-        sectionService.deleteSection(headers["token"] ?: "", sectionId)
-        val responseBody = Response()
-        return ResponseEntity
-                .status(status)
-                .headers(responseHeaders)
-                .body(responseBody)
+    suspend fun deleteSection(@PathVariable sectionId: Long): Response? {
+        rateLimitService.buildHeader()
+        return Response()
     }
 }
